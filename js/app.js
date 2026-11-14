@@ -19,6 +19,9 @@ class FFClanApp {
     this.uploadedImageData = '';
     this.remoteApiBase = '';
     this.permanentAppUrl = 'https://rosarioitzelthh-ctrl.github.io/deathlimite-clan/';
+    this.ghRawApiBase = 'https://api.github.com/repos/rosarioitzelthh-ctrl/deathlimite-clan/contents';
+    this.isSaving = false;
+    this.lastLocalMutationAt = 0;
     this.serverInfo = { localIPs: [], port: 3000, urls: [], publicUrl: null };
     this.deferredInstallPrompt = null;
     this.broadcastChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('deathlimite_sync_v6') : null;
@@ -29,6 +32,28 @@ class FFClanApp {
     return `${base}${endpoint}`;
   }
 
+  async fetchUncachedCloudJson(filename) {
+    // 1. Primero leer desde la API directa de GitHub (sin caché de 10 min de CDN)
+    try {
+      const r = await fetch(`${this.ghRawApiBase}/${filename}?ref=gh-pages&t=${Date.now()}`, {
+        headers: { 'Accept': 'application/vnd.github.raw+json' },
+        cache: 'no-store'
+      });
+      if (r.ok) {
+        return await r.json();
+      }
+    } catch (e) {}
+
+    // 2. Respaldo al archivo relativo
+    try {
+      const r2 = await fetch(`./${filename}?t=${Date.now()}`, { cache: 'no-store' });
+      if (r2.ok) {
+        return await r2.json();
+      }
+    } catch (e) {}
+    return null;
+  }
+
   async resolveLiveBackend() {
     // Si estamos en localhost o directamente en el túnel activo, probar /api/info local
     if (!window.location.hostname.includes('github.io')) {
@@ -37,22 +62,21 @@ class FFClanApp {
         if (r.ok) {
           this.remoteApiBase = '';
           this.serverInfo = await r.json();
-          return;
+          return true;
         }
       } catch (e) {}
     }
 
-    // Si estamos en el link fijo permanente (github.io), descubrir el túnel vivo desde tunnel.json
+    // Si estamos en el link fijo permanente (github.io), descubrir el túnel vivo sin caché
     try {
-      const r = await fetch('./tunnel.json?t=' + Date.now(), { cache: 'no-store' });
-      if (r.ok) {
-        const data = await r.json();
-        if (data && data.publicUrl) {
-          this.remoteApiBase = data.publicUrl.replace(/\/+$/, '');
-          this.serverInfo.publicUrl = this.permanentAppUrl;
-        }
+      const data = await this.fetchUncachedCloudJson('tunnel.json');
+      if (data && data.publicUrl) {
+        this.remoteApiBase = data.publicUrl.replace(/\/+$/, '');
+        this.serverInfo.publicUrl = this.permanentAppUrl;
+        return true;
       }
     } catch (e) {}
+    return false;
   }
 
   getOrCreateDeviceId() {
@@ -232,33 +256,57 @@ class FFClanApp {
     this.renderAll();
   }
 
+  isUserEditingOrModalOpen() {
+    const modals = ['memberModal', 'newPostModal', 'storyModal', 'syncModal'];
+    for (const id of modals) {
+      const el = document.getElementById(id);
+      if (el && !el.classList.contains('hidden')) return true;
+    }
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+      if (active.id !== 'loginIdentifier' && active.id !== 'loginPassword') {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Polling rápido cada 2.5s para garantizar que en celulares a través del túnel de Cloudflare
-  // o del link fijo las notificaciones y cambios lleguen al instante sin bloquearse
+  // o del link fijo las notificaciones y cambios lleguen al instante sin bloquearse ni borrar ediciones
   startFastPollingForMobile() {
     setInterval(async () => {
+      // No sobreescribir mientras se está guardando un cambio local
+      if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 6000)) {
+        return;
+      }
       try {
         const res = await fetch(this.getApiUrl('/api/state?t=' + Date.now()), { cache: 'no-store' });
         if (!res.ok) throw new Error('status');
         const data = await res.json();
         if (data && data.state) {
+          if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 6000)) return;
           const remoteVer = Number(data.state.version) || 0;
           const localVer = Number(this.state.version) || 0;
           const remoteNotifId = data.state.clanInfo?.lastBroadcastNotification?.id;
           const seenNotifId = localStorage.getItem(STORAGE_KEY_SEEN_BROADCAST);
 
-          if (remoteVer !== localVer || (remoteNotifId && remoteNotifId !== seenNotifId)) {
+          if (remoteVer > localVer || (remoteNotifId && remoteNotifId !== seenNotifId)) {
             this.handleIncomingState(data.state);
           }
           this.setSyncStatus(true, 'En línea');
         }
       } catch (e) {
-        // Si el túnel se renovó, buscar la nueva URL en tunnel.json o leer clan-state.json
+        // Si el túnel se renovó, buscar la nueva URL sin caché y leer clan-state.json
         await this.resolveLiveBackend();
         try {
-          const snap = await fetch('./clan-state.json?t=' + Date.now(), { cache: 'no-store' });
-          if (snap.ok) {
-            const snapState = await snap.json();
-            if (snapState && snapState.members && Number(snapState.version) > Number(this.state.version || 0)) {
+          const snapState = await this.fetchUncachedCloudJson('clan-state.json');
+          if (snapState && snapState.members) {
+            if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 6000)) return;
+            const remoteVer = Number(snapState.version) || 0;
+            const localVer = Number(this.state.version) || 0;
+            const remoteNotifId = snapState.clanInfo?.lastBroadcastNotification?.id;
+            const seenNotifId = localStorage.getItem(STORAGE_KEY_SEEN_BROADCAST);
+            if (remoteVer > localVer || (remoteNotifId && remoteNotifId !== seenNotifId)) {
               this.handleIncomingState(snapState);
             }
           }
@@ -294,7 +342,9 @@ class FFClanApp {
     localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
     this.checkAndTriggerUnreadNotification(newState);
     this.syncSessionNickIfChanged();
-    this.renderAll();
+    if (!this.isUserEditingOrModalOpen()) {
+      this.renderAll();
+    }
   }
 
   syncSessionNickIfChanged() {
@@ -342,7 +392,6 @@ class FFClanApp {
           this.state = data.state;
           localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
           this.setSyncStatus(true, 'En línea');
-          // Si hay una notificación reciente no vista por este celular, mostrarla
           if (this.session) {
             this.checkAndTriggerUnreadNotification(this.state);
           }
@@ -354,20 +403,17 @@ class FFClanApp {
         this.serverInfo = await infoRes.json();
       }
     } catch (e) {
-      // Respaldo instantáneo desde clan-state.json en la nube permanente
+      // Respaldo instantáneo desde clan-state.json sin caché
       try {
-        const snapRes = await fetch('./clan-state.json?t=' + Date.now(), { cache: 'no-store' });
-        if (snapRes.ok) {
-          const snapState = await snapRes.json();
-          if (snapState && snapState.members) {
-            this.state = snapState;
-            localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
-            this.setSyncStatus(true, 'En línea');
-            if (this.session) {
-              this.checkAndTriggerUnreadNotification(this.state);
-            }
-            return;
+        const snapState = await this.fetchUncachedCloudJson('clan-state.json');
+        if (snapState && snapState.members) {
+          this.state = snapState;
+          localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
+          this.setSyncStatus(true, 'En línea');
+          if (this.session) {
+            this.checkAndTriggerUnreadNotification(this.state);
           }
+          return;
         }
       } catch (err) {}
       this.setSyncStatus(false, 'Modo local');
@@ -385,9 +431,14 @@ class FFClanApp {
       };
       this.eventSource.onmessage = (event) => {
         try {
+          if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 4000)) return;
           const payload = JSON.parse(event.data);
           if (payload && payload.state && payload.originClientId !== this.clientId) {
-            this.handleIncomingState(payload.state);
+            const remoteVer = Number(payload.state.version) || 0;
+            const localVer = Number(this.state.version) || 0;
+            if (remoteVer >= localVer) {
+              this.handleIncomingState(payload.state);
+            }
           }
         } catch (err) {}
       };
@@ -398,8 +449,10 @@ class FFClanApp {
   }
 
   async persistAndSync(toastMsg = null) {
+    this.isSaving = true;
+    this.lastLocalMutationAt = Date.now();
     this.state.updatedAt = new Date().toISOString();
-    this.state.version = (this.state.version || 1) + 1;
+    this.state.version = (Number(this.state.version) || 1) + 1;
     localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
 
     if (this.broadcastChannel) {
@@ -413,7 +466,7 @@ class FFClanApp {
     this.renderAll();
     if (toastMsg) this.showToast(toastMsg);
 
-    try {
+    const tryPut = async () => {
       const res = await fetch(this.getApiUrl('/api/state'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -422,15 +475,29 @@ class FFClanApp {
           state: this.state
         })
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.state?.version) {
-          this.state.version = data.state.version;
-        }
-        this.setSyncStatus(true, 'En línea');
+      if (!res.ok) throw new Error('PUT failed');
+      return await res.json();
+    };
+
+    try {
+      let data;
+      try {
+        data = await tryPut();
+      } catch (firstErr) {
+        // Si el túnel cambió, resolver el nuevo túnel y reintentar de inmediato
+        await this.resolveLiveBackend();
+        data = await tryPut();
       }
+      if (data?.state?.version) {
+        this.state.version = Math.max(Number(this.state.version) || 1, Number(data.state.version) || 1);
+        localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
+      }
+      this.lastLocalMutationAt = Date.now();
+      this.setSyncStatus(true, 'En línea');
     } catch (e) {
-      this.setSyncStatus(false, 'Guardado');
+      this.setSyncStatus(false, 'Reconectando...');
+    } finally {
+      this.isSaving = false;
     }
   }
 
