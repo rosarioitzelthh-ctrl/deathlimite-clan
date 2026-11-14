@@ -1,6 +1,6 @@
 {
-  "version": 655,
-  "updatedAt": "2026-11-14T09:16:40.864Z",
+  "version": 693,
+  "updatedAt": "2026-11-14T19:52:44.034Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -23,10 +23,10 @@
     },
     "cloudSyncUrl": "",
     "lastBroadcastNotification": {
-      "id": "notif-1794625645820",
-      "title": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! (6:00 PM)",
-      "body": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! Todos a jugar ya. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! ⚔️🏅 El que no haga placas suma falta. 3 faltasmás y son expulsadosssss 👹👹👹👹",
-      "sentAt": "2026-11-14T03:07:25.820Z"
+      "id": "notif-1794684712677",
+      "title": "⚔️ ¡ALÍSTENSE PARA LA GUERRA DE CLANES! (1:00 PM)",
+      "body": "¡Alístense todos en ⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄! Hoy es día de Guerra de Clanes. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! 😂🔥",
+      "sentAt": "2026-11-14T19:31:52.677Z"
     },
     "minPlacasGuerra": 80,
     "warNotifConfig": {
@@ -45,11 +45,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#ec4899",
       "readyForWar": false,
-      "placas": 30,
+      "placas": 80,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T03:39:33.002Z"
+      "updatedAt": "2026-11-14T19:52:44.034Z"
     },
     {
       "id": "m-1794623906672",
@@ -61,11 +61,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
       "readyForWar": true,
-      "placas": 30,
+      "placas": 80,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T03:09:29.946Z"
+      "updatedAt": "2026-11-14T19:27:07.816Z"
     },
     {
       "id": "m-1794623607366",
@@ -77,11 +77,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#22c55e",
       "readyForWar": true,
-      "placas": 30,
+      "placas": 80,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T03:10:39.819Z"
+      "updatedAt": "2026-11-14T19:27:09.372Z"
     },
     {
       "id": "m-1794621849497",
@@ -93,11 +93,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#3b82f6",
       "readyForWar": true,
-      "placas": 30,
+      "placas": 80,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T03:11:20.317Z"
+      "updatedAt": "2026-11-14T19:27:10.887Z"
     },
     {
       "id": "m-1794619614771",
@@ -107,14 +107,14 @@
       "role": "Integrante",
       "avatarColor": "#ff4500",
       "minutosGuerra": 3,
-      "placas": 30,
+      "placas": 80,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T03:08:49.011Z",
+      "updatedAt": "2026-11-14T19:27:12.462Z",
       "previousNick": "Tucán",
       "gameRole": "🔥 Rusher",
-      "readyForWar": false
+      "readyForWar": true
     },
     {
       "id": "m-1794618918436",
@@ -124,27 +124,43 @@
       "role": "Integrante",
       "avatarColor": "#ff4500",
       "minutosGuerra": 3,
-      "placas": 30,
+      "placas": 80,
       "honor": 6500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T03:09:20.980Z",
+      "updatedAt": "2026-11-14T19:27:14.321Z",
       "readyForWar": false,
       "gameRole": "👑 IGL / Capitán"
     }
   ],
-  "expelledHistory": [
-    {
-      "id": "exp-1794626357818",
-      "nick": "papoi",
-      "ffId": "123",
-      "reason": "Expulsado por Administración (80 placas, 1500 honor)",
-      "honor": 1500,
-      "placas": 80,
-      "expelledAt": "2026-11-14T03:19:17.818Z"
-    }
-  ],
+  "expelledHistory": [],
   "posts": [
+    {
+      "id": "p-1794684729223",
+      "authorNick": "Tucan    :(",
+      "isAdmin": false,
+      "cardTitle": "⚔️ Tucan    :(",
+      "imageData": "__PHOTO_REF__",
+      "caption": "Zy",
+      "likes": [
+        "Tucan    :("
+      ],
+      "comments": [],
+      "createdAt": "2026-11-14T19:32:09.223Z"
+    },
+    {
+      "id": "p-1794684672550",
+      "authorNick": "Administrador",
+      "isAdmin": true,
+      "cardTitle": "⚔️ Administrador",
+      "imageData": "__PHOTO_REF__",
+      "caption": "Guaoo 80 de placas!!",
+      "likes": [
+        "Administrador"
+      ],
+      "comments": [],
+      "createdAt": "2026-11-14T19:31:12.551Z"
+    },
     {
       "id": "p-1794624477812",
       "authorNick": "ITZI FIRE",
@@ -153,7 +169,8 @@
       "imageData": "",
       "caption": "Si",
       "likes": [
-        "ITZI FIRE"
+        "ITZI FIRE",
+        "Tucan    :("
       ],
       "comments": [
         {
@@ -167,6 +184,66 @@
           "authorNick": "ITZI FIRE",
           "text": "Si",
           "createdAt": "2026-11-14T02:48:12.724Z"
+        },
+        {
+          "id": "c-1794681933500",
+          "authorNick": "ITZI FIRE",
+          "text": "Si",
+          "createdAt": "2026-11-14T18:45:33.500Z"
+        },
+        {
+          "id": "c-1794681936280",
+          "authorNick": "ITZI FIRE",
+          "text": "Si",
+          "createdAt": "2026-11-14T18:45:36.280Z"
+        },
+        {
+          "id": "c-1794684338627",
+          "authorNick": "Tucan    :(",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:25:38.627Z"
+        },
+        {
+          "id": "c-1794684341767",
+          "authorNick": "Tucan    :(",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:25:41.767Z"
+        },
+        {
+          "id": "c-1794684344409",
+          "authorNick": "Tucan    :(",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:25:44.409Z"
+        },
+        {
+          "id": "c-1794684348089",
+          "authorNick": "Tucan    :(",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:25:48.089Z"
+        },
+        {
+          "id": "c-1794684526538",
+          "authorNick": "Administrador",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:28:46.538Z"
+        },
+        {
+          "id": "c-1794684528643",
+          "authorNick": "Administrador",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:28:48.643Z"
+        },
+        {
+          "id": "c-1794684530866",
+          "authorNick": "Administrador",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:28:50.866Z"
+        },
+        {
+          "id": "c-1794684607502",
+          "authorNick": "Administrador",
+          "text": "Si",
+          "createdAt": "2026-11-14T19:30:07.502Z"
         }
       ],
       "createdAt": "2026-11-14T02:47:57.813Z"
@@ -317,8 +394,8 @@
       "authorNick": "Anónimo",
       "deviceToken": "dev-1794623605974-i0ep33d",
       "message": "Los odio a todos 6767676767",
-      "status": "Pendiente",
-      "adminReply": "",
+      "status": "Resuelta",
+      "adminReply": "676767",
       "createdAt": "2026-11-14T02:47:22.135Z"
     },
     {
