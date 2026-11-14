@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#090c12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+
+  <!-- CONTENEDOR DE NOTIFICACIONES TOAST -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- POPUP DE NOTIFICACIÓN DE GUERRA DE CLANES (1 PM / 6 PM / EN VIVO) -->
+  <div id="warPushPopupContainer"></div>
+
+  <!-- ========================================================================
+       INICIO ESTILO FACEBOOK (¿TIENES CUENTA? INICIA SESIÓN / ¿ERES NUEVO? REGÍSTRATE)
+       ======================================================================== -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-wrapper">
+      <div class="auth-brand">
+        <div class="auth-logo-badge">⚔️</div>
+        <h1 class="auth-clan-title" id="authClanTitle">⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan</h1>
+        <p class="auth-clan-sub">Honor • Placas de Guerra • Faltas</p>
+      </div>
+
+      <!-- CAJA 1: ¿TIENES UNA CUENTA? INICIA SESIÓN -->
+      <div id="fbLoginBox" class="fb-card">
+        <div class="fb-card-header">¿Tienes una cuenta? Inicia sesión</div>
+        <form onsubmit="app.handleLogin(event)">
+          <input
+            type="text"
+            id="loginIdentifier"
+            class="fb-input"
+            placeholder="Tu ID de Free Fire o Nick"
+            required
+            autocomplete="username"
+          />
+          <input
+            type="password"
+            id="loginPassword"
+            class="fb-input"
+            placeholder="Contraseña"
+            required
+            autocomplete="current-password"
+          />
+          <button type="submit" class="fb-btn-login">
+            Iniciar sesión
+          </button>
+        </form>
+
+        <div class="fb-divider"><span>o</span></div>
+
+        <div class="fb-switch-box">
+          <div class="fb-switch-label">¿Eres nuevo en el clan?</div>
+          <button type="button" class="fb-btn-register" onclick="app.showAuthMode('register')">
+            Regístrate (Crear cuenta)
+          </button>
+        </div>
+      </div>
+
+      <!-- CAJA 2: ¿ERES NUEVO? REGÍSTRATE -->
+      <div id="fbRegisterBox" class="fb-card hidden">
+        <div class="fb-card-header">¿Eres nuevo? Regístrate</div>
+        <form onsubmit="app.handleRegister(event)">
+          <input
+            type="text"
+            id="regNick"
+            class="fb-input"
+            placeholder="Tu Nick en Free Fire (Ej. DL•TuNick)"
+            required
+          />
+          <input
+            type="text"
+            id="regFfId"
+            class="fb-input"
+            placeholder="Tu ID de Free Fire (Con este iniciarás sesión)"
+            required
+          />
+          <input
+            type="password"
+            id="regPassword"
+            class="fb-input"
+            placeholder="Crea tu contraseña"
+            required
+          />
+          <button type="submit" class="fb-btn-register" style="width:100%;">
+            Registrarme ahora
+          </button>
+        </form>
+
+        <div class="fb-divider"><span>o</span></div>
+
+        <div class="fb-switch-box">
+          <div class="fb-switch-label">¿Ya tienes una cuenta?</div>
+          <button type="button" class="fb-btn-outline" onclick="app.showAuthMode('login')">
+            Inicia sesión
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       BARRA SUPERIOR
+       ======================================================================== -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-box">
+        <div class="brand-shield">⚔️</div>
+        <div class="brand-text">
+          <h1 id="headerClanName">⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan</h1>
+          <div class="brand-meta">
+            <span id="syncIndicatorDot" class="sync-dot"></span>
+            <span id="syncIndicatorText">En línea</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="app.switchView('profile')" title="Editar mi Nick y Contraseña">
+          👤 Mi Perfil
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="app.openSyncModal()">
+          📲 Link
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="app.logout()">
+          Salir
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       CONTENIDO PRINCIPAL
+       ======================================================================== -->
+  <main class="app-container">
+
+    <!-- ==================== VISTA 1: INICIO (HONOR, PLACAS DE GUERRA Y FALTAS) ==================== -->
+    <section id="view-roster" class="app-view">
+
+      <!-- BANNER DE NOTIFICACIONES DE GUERRA (MIÉRCOLES, SÁBADOS Y DOMINGOS 1 PM Y 6 PM) -->
+      <div id="warNotifStatusBanner"></div>
+
+      <!-- TARJETA GRANDE DE MI ESTADO PERSONAL -->
+      <div id="myPersonalStatusBox"></div>
+
+      <!-- PODIO TOP 3 PLACAS DE GUERRA DE CLANES -->
+      <div id="podiumContainer"></div>
+
+      <!-- BARRA RÁPIDA DE ADMIN -->
+      <div id="adminTopBar" class="hidden" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; background:rgba(255,85,0,0.1); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,85,0,0.35);">
+        <span style="font-size:0.8rem; font-weight:900; color:#ff8800;">👑 Panel Rápido Admin</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-purple btn-sm" onclick="app.sendLiveWarNotification('1pm')">
+            🔔 Aviso 1 PM
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="app.sendLiveWarNotification('6pm')">
+            🚨 Aviso 6 PM
+          </button>
+          <button type="button" class="btn btn-fire btn-sm" onclick="app.openMemberModal()">
+            ➕ Agregar
+          </button>
+        </div>
+      </div>
+
+      <!-- BUSCADOR -->
+      <div style="margin-bottom:10px;">
+        <input
+          type="text"
+          id="rosterSearchInput"
+          class="form-input"
+          placeholder="🔍 Buscar integrante por Nick o ID..."
+          oninput="app.renderRoster()"
+        />
+      </div>
+
+      <!-- FILTROS DESLIZABLES -->
+      <div class="mobile-filters" id="rosterFilterPills">
+        <button type="button" class="filter-btn active" onclick="app.setRosterFilter('all')">Todos</button>
+        <button type="button" class="filter-btn" onclick="app.setRosterFilter('good')">✅ Van Bien</button>
+        <button type="button" class="filter-btn" onclick="app.setRosterFilter('faults')">⚠️ Con Faltas</button>
+        <button type="button" class="filter-btn" onclick="app.setRosterFilter('expelled')">💀 Expulsados</button>
+        <button type="button" class="filter-btn" onclick="app.setRosterFilter('ready')">🟢 Buscando Escuadra</button>
+      </div>
+
+      <!-- LISTA DE JUGADORES (HONOR, PLACAS DE GUERRA Y FALTAS) -->
+      <div id="membersGrid" class="members-list"></div>
+
+      <!-- AL FINAL DE LA LISTA: REDIRECCIONAR FALTAS A WHATSAPP -->
+      <div id="whatsappBottomRedirectBox" style="margin-top: 20px;"></div>
+    </section>
+
+    <!-- ==================== VISTA 2: FALTAS, EXPULSIONES Y ACTUALIZAR ESTADO ==================== -->
+    <section id="view-expulsions" class="app-view hidden">
+      <div id="expulsionsContent"></div>
+    </section>
+
+    <!-- ==================== VISTA 3: CLANGRAM (TIPO INSTAGRAM) ==================== -->
+    <section id="view-clangram" class="app-view hidden">
+      <div class="stories-bar" id="clangramStories"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 style="font-size:1.05rem; font-weight:900;">📸 Muro del Clan</h2>
+        <button type="button" class="btn btn-fire btn-sm" onclick="app.openNewPostModal()">
+          ➕ Publicar Foto / Aviso
+        </button>
+      </div>
+
+      <div id="clangramFeed"></div>
+    </section>
+
+    <!-- ==================== VISTA 4: BUZÓN DE QUEJAS ==================== -->
+    <section id="view-complaints" class="app-view hidden">
+      <div class="member-card" style="margin-bottom:14px;">
+        <h2 style="font-size:1.02rem; font-weight:900; margin-bottom:4px;">📬 Buzón de Quejas</h2>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
+          Solo los administradores pueden leer las quejas enviadas.
+        </p>
+
+        <form onsubmit="app.submitComplaint(event)">
+          <div class="form-group">
+            <label class="form-label">¿Cómo quieres enviarla?</label>
+            <select id="compAnonymous" class="form-select">
+              <option value="true">🕵️ Enviar como Anónimo</option>
+              <option value="false">👤 Mostrar mi Nick</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Motivo</label>
+            <select id="compCategory" class="form-select">
+              <option value="Guerra de Clanes">⚔️ No hacen Placas en Guerra de Clanes</option>
+              <option value="Honor bajo">🔥 Honor bajo</option>
+              <option value="No juegan con el clan">🤝 No quieren jugar con los del clan</option>
+              <option value="Toxicidad">🤬 Problema con un integrante</option>
+              <option value="Sugerencia">💡 Sugerencia para el Clan</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Escribe tu mensaje</label>
+            <textarea id="compMessage" class="form-textarea" placeholder="Escribe aquí tu queja o sugerencia..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-fire btn-block">
+            📨 Enviar Queja
+          </button>
+        </form>
+      </div>
+
+      <div id="complaintsListSection"></div>
+    </section>
+
+    <!-- ==================== VISTA 5: MI PERFIL (CAMBIAR NICKNAME, CONTRASEÑA, ROL Y NOTIFICACIONES) ==================== -->
+    <section id="view-profile" class="app-view hidden">
+      <div id="profileViewContainer"></div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       MENÚ INFERIOR DE CELULAR
+       ======================================================================== -->
+  <nav class="bottom-nav">
+    <button type="button" class="nav-item active" id="nav-roster" onclick="app.switchView('roster')">
+      <span class="nav-icon">⚔️</span>
+      <span>Inicio</span>
+    </button>
+    <button type="button" class="nav-item" id="nav-expulsions" onclick="app.switchView('expulsions')">
+      <span class="nav-icon">🚫</span>
+      <span>Faltas</span>
+      <span id="badgeExpulsions" class="nav-badge hidden">0</span>
+    </button>
+    <button type="button" class="nav-item" id="nav-clangram" onclick="app.switchView('clangram')">
+      <span class="nav-icon">📸</span>
+      <span>Muro IG</span>
+    </button>
+    <button type="button" class="nav-item" id="nav-complaints" onclick="app.switchView('complaints')">
+      <span class="nav-icon">📬</span>
+      <span>Quejas</span>
+      <span id="badgeComplaints" class="nav-badge hidden">0</span>
+    </button>
+    <button type="button" class="nav-item" id="nav-profile" onclick="app.switchView('profile')">
+      <span class="nav-icon">👤</span>
+      <span id="navProfileLabel">Mi Perfil</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: EDITAR / CREAR INTEGRANTE (SOLO ADMIN) -->
+  <div id="memberModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="memberModalTitle" style="font-size:1.05rem; font-weight:900;">Actualizar Estado del Integrante</h3>
+        <button type="button" class="close-btn" onclick="app.closeMemberModal()">✕</button>
+      </div>
+      <form onsubmit="app.saveMemberForm(event)">
+        <input type="hidden" id="editMemberId" />
+        <div class="form-group">
+          <label class="form-label">Nick de Free Fire</label>
+          <input type="text" id="editMemberNick" class="form-input" required />
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div class="form-group">
+            <label class="form-label">ID de Free Fire</label>
+            <input type="text" id="editMemberFfId" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña del Jugador</label>
+            <input type="text" id="editMemberPassword" class="form-input" placeholder="123" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div class="form-group">
+            <label class="form-label">🔥 Honor Actual</label>
+            <input type="number" min="0" id="editMemberHonor" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">🏅 Placas de Guerra Hechas</label>
+            <input type="number" min="0" id="editMemberPlacas" class="form-input" required />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div class="form-group">
+            <label class="form-label">🚫 Faltas Acumuladas</label>
+            <input type="number" min="0" id="editMemberFaltasBase" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">🧹 Semanas &gt;3,000 Honor</label>
+            <input type="number" min="0" id="editMemberWeeks3k" class="form-input" required />
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button type="button" class="btn btn-secondary btn-block" onclick="app.closeMemberModal()">Cancelar</button>
+          <button type="submit" class="btn btn-fire btn-block">💾 Guardar Estado</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NUEVA PUBLICACIÓN CLANGRAM -->
+  <div id="newPostModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-size:1.05rem; font-weight:900;">📸 Nueva Publicación</h3>
+        <button type="button" class="close-btn" onclick="app.closeNewPostModal()">✕</button>
+      </div>
+      <form onsubmit="app.submitNewPost(event)">
+        <div class="form-group">
+          <label class="form-label">Subir Foto de tu Galería (Opcional)</label>
+          <input type="file" id="postImageInput" accept="image/*" class="form-input" onchange="app.handlePostImageUpload(event)" />
+          <div id="postImagePreviewBox" class="hidden" style="margin-top:8px; position:relative;">
+            <img id="postImagePreview" src="" alt="Preview" style="width:100%; max-height:200px; object-fit:cover; border-radius:12px;" />
+            <button type="button" class="btn btn-danger btn-sm" style="position:absolute; top:8px; right:8px;" onclick="app.clearUploadedImage()">Quitar</button>
+          </div>
+        </div>
+
+        <div id="bannerBuilderFields" class="form-group">
+          <label class="form-label">Título (Si no subes foto)</label>
+          <input type="text" id="postCardTitle" class="form-input" placeholder="Ej. ⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mensaje o pie de foto</label>
+          <textarea id="postCaption" class="form-textarea" placeholder="Escribe algo para el clan..." required></textarea>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary btn-block" onclick="app.closeNewPostModal()">Cancelar</button>
+          <button type="submit" class="btn btn-fire btn-block">Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: HISTORIA DESTACADA -->
+  <div id="storyModal" class="modal-backdrop hidden" onclick="app.closeStoryModal()">
+    <div class="modal-box" style="text-align:center;" onclick="event.stopPropagation()">
+      <div id="storyModalContent"></div>
+      <button type="button" class="btn btn-secondary btn-block" style="margin-top:16px;" onclick="app.closeStoryModal()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- MODAL: COMPARTIR LINK / INSTALAR APP -->
+  <div id="syncModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-size:1.05rem; font-weight:900;">📲 Invitar al Clan e Instalar App</h3>
+        <button type="button" class="close-btn" onclick="app.closeSyncModal()">✕</button>
+      </div>
+      <div id="syncModalBody"></div>
+    </div>
+  </div>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>
