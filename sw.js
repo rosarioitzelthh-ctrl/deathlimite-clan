@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ff-clan-v10';
+const CACHE_NAME = 'ff-clan-v11';
 const ASSETS = [
   './',
   './index.html',
