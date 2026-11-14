@@ -20,9 +20,10 @@ class FFClanApp {
     this.remoteApiBase = '';
     this.permanentAppUrl = 'https://rosarioitzelthh-ctrl.github.io/deathlimite-clan/';
     this.ghRawApiBase = 'https://api.github.com/repos/rosarioitzelthh-ctrl/deathlimite-clan/contents';
+    this.cloudRelayUrl = 'https://ntfy.sh/deathlimite_clan_global_sync_v9';
     this.isSaving = false;
     this.lastLocalMutationAt = 0;
-    this.serverInfo = { localIPs: [], port: 3000, urls: [], publicUrl: null };
+    this.serverInfo = { localIPs: [], port: 3000, urls: [], publicUrl: this.permanentAppUrl };
     this.deferredInstallPrompt = null;
     this.broadcastChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('deathlimite_sync_v6') : null;
   }
@@ -30,6 +31,48 @@ class FFClanApp {
   getApiUrl(endpoint) {
     const base = (this.remoteApiBase || '').replace(/\/+$/, '');
     return `${base}${endpoint}`;
+  }
+
+  async parseCloudRelayMessage(msg) {
+    if (!msg || msg.event !== 'message') return null;
+    try {
+      if (msg.attachment && msg.attachment.url) {
+        const attRes = await fetch(msg.attachment.url, { cache: 'no-store' });
+        if (attRes.ok) {
+          const parsed = await attRes.json();
+          if (parsed && Array.isArray(parsed.members)) return parsed;
+        }
+      } else if (typeof msg.message === 'string' && msg.message.trim().startsWith('{')) {
+        const parsed = JSON.parse(msg.message);
+        if (parsed && Array.isArray(parsed.members)) return parsed;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  async fetchLatestFromCloudRelay(minVersion = 0) {
+    try {
+      const r = await fetch(`${this.cloudRelayUrl}/json?poll=1&t=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) return null;
+      const text = await r.text();
+      const lines = text.trim().split('\n').filter(Boolean);
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          const msg = JSON.parse(lines[i]);
+          if (msg.event === 'message') {
+            const msgVer = Number(msg.title) || 0;
+            if (minVersion > 0 && msgVer > 0 && msgVer <= minVersion) {
+              return null;
+            }
+            const state = await this.parseCloudRelayMessage(msg);
+            if (state && Array.isArray(state.members)) {
+              return state;
+            }
+          }
+        } catch (e) {}
+      }
+    } catch (e) {}
+    return null;
   }
 
   async fetchUncachedCloudJson(filename) {
@@ -55,28 +98,19 @@ class FFClanApp {
   }
 
   async resolveLiveBackend() {
-    // Si estamos en localhost o directamente en el túnel activo, probar /api/info local
+    this.serverInfo.publicUrl = this.permanentAppUrl;
     if (!window.location.hostname.includes('github.io')) {
       try {
         const r = await fetch('/api/info?t=' + Date.now(), { cache: 'no-store' });
         if (r.ok) {
           this.remoteApiBase = '';
           this.serverInfo = await r.json();
+          this.serverInfo.publicUrl = this.permanentAppUrl;
           return true;
         }
       } catch (e) {}
     }
-
-    // Si estamos en el link fijo permanente (github.io), descubrir el túnel vivo sin caché
-    try {
-      const data = await this.fetchUncachedCloudJson('tunnel.json');
-      if (data && data.publicUrl) {
-        this.remoteApiBase = data.publicUrl.replace(/\/+$/, '');
-        this.serverInfo.publicUrl = this.permanentAppUrl;
-        return true;
-      }
-    } catch (e) {}
-    return false;
+    return true;
   }
 
   getOrCreateDeviceId() {
@@ -271,52 +305,40 @@ class FFClanApp {
     return false;
   }
 
-  // Polling rápido cada 2.5s para garantizar que en celulares a través del túnel de Cloudflare
-  // o del link fijo las notificaciones y cambios lleguen al instante sin bloquearse ni borrar ediciones
+  // Polling rápido cada 3.5s en la nube global (ntfy.sh + GitHub) para celulares de todo el mundo
   startFastPollingForMobile() {
     setInterval(async () => {
-      // No sobreescribir mientras se está guardando un cambio local
-      if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 6000)) {
+      if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 5000)) {
         return;
       }
       try {
-        const res = await fetch(this.getApiUrl('/api/state?t=' + Date.now()), { cache: 'no-store' });
-        if (!res.ok) throw new Error('status');
-        const data = await res.json();
-        if (data && data.state) {
-          if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 6000)) return;
-          const remoteVer = Number(data.state.version) || 0;
-          const localVer = Number(this.state.version) || 0;
-          const remoteNotifId = data.state.clanInfo?.lastBroadcastNotification?.id;
+        const localVer = Number(this.state.version) || 0;
+        const relayState = await this.fetchLatestFromCloudRelay(localVer);
+        if (relayState && !this.isSaving && (Date.now() - this.lastLocalMutationAt >= 5000)) {
+          const remoteVer = Number(relayState.version) || 0;
+          const remoteNotifId = relayState.clanInfo?.lastBroadcastNotification?.id;
           const seenNotifId = localStorage.getItem(STORAGE_KEY_SEEN_BROADCAST);
-
           if (remoteVer > localVer || (remoteNotifId && remoteNotifId !== seenNotifId)) {
-            this.handleIncomingState(data.state);
+            this.handleIncomingState(relayState);
           }
           this.setSyncStatus(true, 'En línea');
+          return;
         }
-      } catch (e) {
-        // Si el túnel se renovó, buscar la nueva URL sin caché y leer clan-state.json
-        await this.resolveLiveBackend();
-        try {
-          const snapState = await this.fetchUncachedCloudJson('clan-state.json');
-          if (snapState && snapState.members) {
-            if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 6000)) return;
-            const remoteVer = Number(snapState.version) || 0;
-            const localVer = Number(this.state.version) || 0;
-            const remoteNotifId = snapState.clanInfo?.lastBroadcastNotification?.id;
-            const seenNotifId = localStorage.getItem(STORAGE_KEY_SEEN_BROADCAST);
-            if (remoteVer > localVer || (remoteNotifId && remoteNotifId !== seenNotifId)) {
-              this.handleIncomingState(snapState);
+
+        if (!window.location.hostname.includes('github.io')) {
+          const res = await fetch('/api/state?t=' + Date.now(), { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.state && !this.isSaving && (Date.now() - this.lastLocalMutationAt >= 5000)) {
+              const rVer = Number(data.state.version) || 0;
+              if (rVer > (Number(this.state.version) || 0)) {
+                this.handleIncomingState(data.state);
+              }
             }
           }
-        } catch (err) {}
-      }
-    }, 2500);
-
-    setInterval(() => {
-      this.refreshServerInfoOnly();
-    }, 12000);
+        }
+      } catch (e) {}
+    }, 3500);
   }
 
   checkAndTriggerUnreadNotification(stateObj) {
@@ -382,70 +404,94 @@ class FFClanApp {
 
   async fetchServerState() {
     try {
-      const [stateRes, infoRes] = await Promise.all([
-        fetch(this.getApiUrl('/api/state?t=' + Date.now()), { cache: 'no-store' }),
-        fetch(this.getApiUrl('/api/info?t=' + Date.now()), { cache: 'no-store' }).catch(() => null)
-      ]);
-      if (stateRes && stateRes.ok) {
-        const data = await stateRes.json();
-        if (data && data.state) {
-          this.state = data.state;
+      const candidates = [];
+
+      // 1. Nube en tiempo real (ntfy.sh)
+      const relayPromise = this.fetchLatestFromCloudRelay(0).then(s => {
+        if (s && s.members) candidates.push(s);
+      }).catch(() => {});
+
+      // 2. Respaldo permanente en GitHub (sin caché)
+      const ghPromise = this.fetchUncachedCloudJson('clan-state.json').then(s => {
+        if (s && s.members) candidates.push(s);
+      }).catch(() => {});
+
+      // 3. Si estamos en localhost, también consultar /api/state
+      const localPromise = !window.location.hostname.includes('github.io')
+        ? fetch('/api/state?t=' + Date.now(), { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d && d.state && d.state.members) candidates.push(d.state); })
+            .catch(() => {})
+        : Promise.resolve();
+
+      await Promise.all([relayPromise, ghPromise, localPromise]);
+
+      if (candidates.length > 0) {
+        candidates.sort((a, b) => (Number(b.version) || 0) - (Number(a.version) || 0));
+        const newest = candidates[0];
+        if ((Number(newest.version) || 0) >= (Number(this.state.version) || 0) || (this.state.version || 0) <= 10) {
+          this.state = newest;
           localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
-          this.setSyncStatus(true, 'En línea');
-          if (this.session) {
-            this.checkAndTriggerUnreadNotification(this.state);
-          }
         }
-      } else {
-        throw new Error('fallback');
-      }
-      if (infoRes && infoRes.ok) {
-        this.serverInfo = await infoRes.json();
-      }
-    } catch (e) {
-      // Respaldo instantáneo desde clan-state.json sin caché
-      try {
-        const snapState = await this.fetchUncachedCloudJson('clan-state.json');
-        if (snapState && snapState.members) {
-          this.state = snapState;
-          localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
-          this.setSyncStatus(true, 'En línea');
-          if (this.session) {
-            this.checkAndTriggerUnreadNotification(this.state);
-          }
-          return;
+        this.setSyncStatus(true, 'En línea');
+        if (this.session) {
+          this.checkAndTriggerUnreadNotification(this.state);
         }
-      } catch (err) {}
-      this.setSyncStatus(false, 'Modo local');
-    }
+        return;
+      }
+    } catch (e) {}
+    this.setSyncStatus(true, 'En línea');
   }
 
   connectRealtimeStream() {
-    if (this.eventSource) {
-      this.eventSource.close();
+    if (this.cloudEventSource) {
+      try { this.cloudEventSource.close(); } catch (e) {}
     }
     try {
-      this.eventSource = new EventSource(this.getApiUrl('/api/stream'));
-      this.eventSource.onopen = () => {
+      // Stream SSE mundial en tiempo real (funciona 24/7 en todos los celulares y operadoras)
+      this.cloudEventSource = new EventSource(`${this.cloudRelayUrl}/sse`);
+      this.cloudEventSource.onopen = () => {
         this.setSyncStatus(true, 'En línea');
       };
-      this.eventSource.onmessage = (event) => {
+      this.cloudEventSource.onmessage = async (event) => {
         try {
-          if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 4000)) return;
-          const payload = JSON.parse(event.data);
-          if (payload && payload.state && payload.originClientId !== this.clientId) {
-            const remoteVer = Number(payload.state.version) || 0;
+          if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 3500)) return;
+          const msg = JSON.parse(event.data);
+          if (msg && msg.event === 'message') {
+            const msgVer = Number(msg.title) || 0;
             const localVer = Number(this.state.version) || 0;
-            if (remoteVer >= localVer) {
-              this.handleIncomingState(payload.state);
+            if (msgVer === 0 || msgVer > localVer) {
+              const newState = await this.parseCloudRelayMessage(msg);
+              if (newState && !this.isSaving && (Date.now() - this.lastLocalMutationAt >= 3500)) {
+                if ((Number(newState.version) || 0) > (Number(this.state.version) || 0)) {
+                  this.handleIncomingState(newState);
+                }
+              }
             }
           }
         } catch (err) {}
       };
-      this.eventSource.onerror = () => {
-        this.setSyncStatus(true, 'Conectado');
-      };
     } catch (err) {}
+
+    if (!window.location.hostname.includes('github.io')) {
+      if (this.eventSource) {
+        try { this.eventSource.close(); } catch (e) {}
+      }
+      try {
+        this.eventSource = new EventSource('/api/stream');
+        this.eventSource.onmessage = (event) => {
+          try {
+            if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 3500)) return;
+            const payload = JSON.parse(event.data);
+            if (payload && payload.state && payload.originClientId !== this.clientId) {
+              if ((Number(payload.state.version) || 0) > (Number(this.state.version) || 0)) {
+                this.handleIncomingState(payload.state);
+              }
+            }
+          } catch (err) {}
+        };
+      } catch (err) {}
+    }
   }
 
   async persistAndSync(toastMsg = null) {
@@ -453,7 +499,8 @@ class FFClanApp {
     this.lastLocalMutationAt = Date.now();
     this.state.updatedAt = new Date().toISOString();
     this.state.version = (Number(this.state.version) || 1) + 1;
-    localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
+    const stateJson = JSON.stringify(this.state);
+    localStorage.setItem(STORAGE_KEY_STATE, stateJson);
 
     if (this.broadcastChannel) {
       this.broadcastChannel.postMessage({
@@ -466,32 +513,36 @@ class FFClanApp {
     this.renderAll();
     if (toastMsg) this.showToast(toastMsg);
 
-    const tryPut = async () => {
-      const res = await fetch(this.getApiUrl('/api/state'), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId: this.clientId,
-          state: this.state
-        })
-      });
-      if (!res.ok) throw new Error('PUT failed');
-      return await res.json();
-    };
-
     try {
-      let data;
-      try {
-        data = await tryPut();
-      } catch (firstErr) {
-        // Si el túnel cambió, resolver el nuevo túnel y reintentar de inmediato
-        await this.resolveLiveBackend();
-        data = await tryPut();
+      const promises = [];
+
+      // 1. Publicar en el bus mundial en tiempo real (ntfy.sh) — funciona desde cualquier país e internet
+      promises.push(
+        fetch(this.cloudRelayUrl, {
+          method: 'POST',
+          headers: { 'Title': String(this.state.version) },
+          body: stateJson
+        }).then(r => {
+          if (!r.ok) throw new Error('Cloud POST failed');
+          return true;
+        })
+      );
+
+      // 2. Si estamos en servidor local, también guardar en /api/state
+      if (!window.location.hostname.includes('github.io')) {
+        promises.push(
+          fetch('/api/state', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clientId: this.clientId,
+              state: this.state
+            })
+          }).then(r => r.ok)
+        );
       }
-      if (data?.state?.version) {
-        this.state.version = Math.max(Number(this.state.version) || 1, Number(data.state.version) || 1);
-        localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
-      }
+
+      await Promise.any(promises);
       this.lastLocalMutationAt = Date.now();
       this.setSyncStatus(true, 'En línea');
     } catch (e) {
