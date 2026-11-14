@@ -52,7 +52,7 @@ class FFClanApp {
 
   async fetchLatestFromCloudRelay(minVersion = 0) {
     try {
-      const r = await fetch(`${this.cloudRelayUrl}/json?poll=1&t=${Date.now()}`, { cache: 'no-store' });
+      const r = await fetch(`${this.cloudRelayUrl}/json?poll=1&since=12h`, { cache: 'no-store' });
       if (!r.ok) return null;
       const text = await r.text();
       const lines = text.trim().split('\n').filter(Boolean);
