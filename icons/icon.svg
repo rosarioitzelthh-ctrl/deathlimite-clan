@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141824"/>
+      <stop offset="100%" stop-color="#07080d"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff2a00"/>
+      <stop offset="50%" stop-color="#ff7700"/>
+      <stop offset="100%" stop-color="#ffcc00"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+  <path d="M256 54 L416 118 L416 254 C416 355 344 432 256 462 C168 432 96 355 96 254 L96 118 Z" fill="none" stroke="url(#fireGrad)" stroke-width="22" stroke-linejoin="round"/>
+  <path d="M262 122 C262 122 332 178 318 252 C340 236 346 206 346 206 C378 252 356 336 290 364 C312 328 302 292 276 276 C284 312 258 346 226 364 C168 340 150 272 184 218 C184 218 192 246 214 254 C198 198 262 122 262 122 Z" fill="url(#fireGrad)"/>
+  <text x="256" y="425" font-family="Arial Black, sans-serif" font-weight="900" font-size="52" fill="#ffffff" text-anchor="middle" letter-spacing="4">FF CLAN</text>
+</svg>
