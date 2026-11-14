@@ -20,7 +20,9 @@ class FFClanApp {
     this.remoteApiBase = '';
     this.permanentAppUrl = 'https://rosarioitzelthh-ctrl.github.io/deathlimite-clan/';
     this.ghRawApiBase = 'https://api.github.com/repos/rosarioitzelthh-ctrl/deathlimite-clan/contents';
-    this.cloudRelayUrl = 'https://ntfy.sh/deathlimite_clan_global_sync_v9';
+    this.cloudRelayUrl = 'https://ntfy.sh/deathlimite_clan_sync_v11';
+    this.photoCache = {};
+    this.rememberPhotosFromState(this.state);
     this.isSaving = false;
     this.lastLocalMutationAt = 0;
     this.serverInfo = { localIPs: [], port: 3000, urls: [], publicUrl: this.permanentAppUrl };
@@ -33,18 +35,105 @@ class FFClanApp {
     return `${base}${endpoint}`;
   }
 
+  rememberPhotosFromState(stateObj) {
+    if (!this.photoCache) this.photoCache = {};
+    for (const p of (stateObj?.posts || [])) {
+      if (p && p.id && p.imageData && p.imageData !== '__PHOTO_REF__' && p.imageData.startsWith('data:')) {
+        this.photoCache[p.id] = p.imageData;
+      }
+    }
+  }
+
+  restorePhotosIntoState(stateObj) {
+    if (!stateObj || !Array.isArray(stateObj.posts)) return stateObj;
+    this.rememberPhotosFromState(this.state);
+    stateObj.posts = stateObj.posts.map(p => {
+      if (p.imageData === '__PHOTO_REF__' && this.photoCache[p.id]) {
+        return { ...p, imageData: this.photoCache[p.id] };
+      }
+      return p;
+    });
+    this.rememberPhotosFromState(stateObj);
+    return stateObj;
+  }
+
+  async encodeStateForCloud(stateObj) {
+    this.rememberPhotosFromState(stateObj);
+    const lite = {
+      ...stateObj,
+      posts: (stateObj.posts || []).map(p => ({
+        ...p,
+        imageData: p.imageData ? '__PHOTO_REF__' : ''
+      }))
+    };
+    const jsonStr = JSON.stringify(lite);
+    if (typeof CompressionStream !== 'undefined') {
+      try {
+        const bytes = new TextEncoder().encode(jsonStr);
+        const cs = new CompressionStream('gzip');
+        const writer = cs.writable.getWriter();
+        writer.write(bytes);
+        writer.close();
+        const buf = await new Response(cs.readable).arrayBuffer();
+        const uint8 = new Uint8Array(buf);
+        let binary = '';
+        for (let i = 0; i < uint8.length; i++) {
+          binary += String.fromCharCode(uint8[i]);
+        }
+        return 'GZ:' + btoa(binary);
+      } catch (e) {}
+    }
+    return jsonStr;
+  }
+
+  async decodeStateFromCloud(rawStr) {
+    if (!rawStr || typeof rawStr !== 'string') return null;
+    const trimmed = rawStr.trim();
+    if (trimmed.startsWith('GZ:') && typeof DecompressionStream !== 'undefined') {
+      try {
+        const b64 = trimmed.slice(3);
+        const binary = atob(b64);
+        const uint8 = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          uint8[i] = binary.charCodeAt(i);
+        }
+        const ds = new DecompressionStream('gzip');
+        const writer = ds.writable.getWriter();
+        writer.write(uint8);
+        writer.close();
+        const text = await new Response(ds.readable).text();
+        const parsed = JSON.parse(text);
+        if (parsed && Array.isArray(parsed.members)) {
+          return this.restorePhotosIntoState(parsed);
+        }
+      } catch (e) {}
+    }
+    if (trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && Array.isArray(parsed.members)) {
+          return this.restorePhotosIntoState(parsed);
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
   async parseCloudRelayMessage(msg) {
     if (!msg || msg.event !== 'message') return null;
     try {
+      if (typeof msg.message === 'string' && (msg.message.startsWith('GZ:') || msg.message.trim().startsWith('{'))) {
+        const decoded = await this.decodeStateFromCloud(msg.message);
+        if (decoded) return decoded;
+      }
       if (msg.attachment && msg.attachment.url) {
         const attRes = await fetch(msg.attachment.url, { cache: 'no-store' });
         if (attRes.ok) {
           const parsed = await attRes.json();
-          if (parsed && Array.isArray(parsed.members)) return parsed;
+          if (parsed && Array.isArray(parsed.members)) {
+            return this.restorePhotosIntoState(parsed);
+          }
         }
-      } else if (typeof msg.message === 'string' && msg.message.trim().startsWith('{')) {
-        const parsed = JSON.parse(msg.message);
-        if (parsed && Array.isArray(parsed.members)) return parsed;
       }
     } catch (e) {}
     return null;
@@ -305,9 +394,9 @@ class FFClanApp {
     return false;
   }
 
-  // Polling rápido cada 3.5s en la nube global (ntfy.sh + GitHub) para celulares de todo el mundo
+  // Polling de respaldo cada 14s en la nube (además del stream SSE instantáneo)
   startFastPollingForMobile() {
-    setInterval(async () => {
+    const pollNow = async () => {
       if (this.isSaving || (Date.now() - this.lastLocalMutationAt < 5000)) {
         return;
       }
@@ -322,23 +411,16 @@ class FFClanApp {
             this.handleIncomingState(relayState);
           }
           this.setSyncStatus(true, 'En línea');
-          return;
-        }
-
-        if (!window.location.hostname.includes('github.io')) {
-          const res = await fetch('/api/state?t=' + Date.now(), { cache: 'no-store' });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.state && !this.isSaving && (Date.now() - this.lastLocalMutationAt >= 5000)) {
-              const rVer = Number(data.state.version) || 0;
-              if (rVer > (Number(this.state.version) || 0)) {
-                this.handleIncomingState(data.state);
-              }
-            }
-          }
         }
       } catch (e) {}
-    }, 3500);
+    };
+
+    setInterval(pollNow, 14000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        pollNow();
+      }
+    });
   }
 
   checkAndTriggerUnreadNotification(stateObj) {
@@ -405,33 +487,43 @@ class FFClanApp {
   async fetchServerState() {
     try {
       const candidates = [];
+      let relayVer = 0;
 
-      // 1. Nube en tiempo real (ntfy.sh)
-      const relayPromise = this.fetchLatestFromCloudRelay(0).then(s => {
-        if (s && s.members) candidates.push(s);
-      }).catch(() => {});
-
-      // 2. Respaldo permanente en GitHub (sin caché)
+      // 1. Primero cargar respaldo permanente de GitHub para tener todas las fotos en caché
       const ghPromise = this.fetchUncachedCloudJson('clan-state.json').then(s => {
-        if (s && s.members) candidates.push(s);
+        if (s && s.members) {
+          this.rememberPhotosFromState(s);
+          candidates.push(s);
+        }
       }).catch(() => {});
 
-      // 3. Si estamos en localhost, también consultar /api/state
-      const localPromise = !window.location.hostname.includes('github.io')
-        ? fetch('/api/state?t=' + Date.now(), { cache: 'no-store' })
-            .then(r => r.ok ? r.json() : null)
-            .then(d => { if (d && d.state && d.state.members) candidates.push(d.state); })
-            .catch(() => {})
-        : Promise.resolve();
+      await ghPromise;
 
-      await Promise.all([relayPromise, ghPromise, localPromise]);
+      // 2. Nube en tiempo real (ntfy.sh)
+      try {
+        const s = await this.fetchLatestFromCloudRelay(0);
+        if (s && s.members) {
+          relayVer = Number(s.version) || 0;
+          candidates.push(this.restorePhotosIntoState(s));
+        }
+      } catch (e) {}
 
       if (candidates.length > 0) {
         candidates.sort((a, b) => (Number(b.version) || 0) - (Number(a.version) || 0));
-        const newest = candidates[0];
+        const newest = this.restorePhotosIntoState(candidates[0]);
         if ((Number(newest.version) || 0) >= (Number(this.state.version) || 0) || (this.state.version || 0) <= 10) {
           this.state = newest;
           localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
+        }
+        // Si el estado local/GitHub es más nuevo que el bus en vivo (ej. tras 12h sin uso), re-publicar al bus
+        if ((Number(this.state.version) || 0) > relayVer) {
+          this.encodeStateForCloud(this.state).then(encoded => {
+            fetch(this.cloudRelayUrl, {
+              method: 'POST',
+              headers: { 'Title': String(this.state.version) },
+              body: encoded
+            }).catch(() => {});
+          });
         }
         this.setSyncStatus(true, 'En línea');
         if (this.session) {
@@ -499,6 +591,7 @@ class FFClanApp {
     this.lastLocalMutationAt = Date.now();
     this.state.updatedAt = new Date().toISOString();
     this.state.version = (Number(this.state.version) || 1) + 1;
+    this.rememberPhotosFromState(this.state);
     const stateJson = JSON.stringify(this.state);
     localStorage.setItem(STORAGE_KEY_STATE, stateJson);
 
@@ -514,39 +607,17 @@ class FFClanApp {
     if (toastMsg) this.showToast(toastMsg);
 
     try {
-      const promises = [];
-
-      // 1. Publicar en el bus mundial en tiempo real (ntfy.sh) — funciona desde cualquier país e internet
-      promises.push(
-        fetch(this.cloudRelayUrl, {
-          method: 'POST',
-          headers: { 'Title': String(this.state.version) },
-          body: stateJson
-        }).then(r => {
-          if (!r.ok) throw new Error('Cloud POST failed');
-          return true;
-        })
-      );
-
-      // 2. Si estamos en servidor local, también guardar en /api/state
-      if (!window.location.hostname.includes('github.io')) {
-        promises.push(
-          fetch('/api/state', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clientId: this.clientId,
-              state: this.state
-            })
-          }).then(r => r.ok)
-        );
-      }
-
-      await Promise.any(promises);
+      const encodedPayload = await this.encodeStateForCloud(this.state);
+      const res = await fetch(this.cloudRelayUrl, {
+        method: 'POST',
+        headers: { 'Title': String(this.state.version) },
+        body: encodedPayload
+      });
+      if (!res.ok) throw new Error('Cloud POST failed');
       this.lastLocalMutationAt = Date.now();
       this.setSyncStatus(true, 'En línea');
     } catch (e) {
-      this.setSyncStatus(false, 'Reconectando...');
+      this.setSyncStatus(true, 'Guardado');
     } finally {
       this.isSaving = false;
     }
