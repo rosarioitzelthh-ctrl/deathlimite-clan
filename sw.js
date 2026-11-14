@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ff-clan-v7';
+const CACHE_NAME = 'ff-clan-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -36,7 +36,14 @@ self.addEventListener('notificationclick', event => {
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.url.includes('/api/') || event.request.url.includes('tunnel.json') || event.request.url.includes('clan-state.json')) {
+  const url = event.request.url || '';
+  if (
+    event.request.method !== 'GET' ||
+    url.includes('/api/') ||
+    url.includes('api.github.com') ||
+    url.includes('tunnel.json') ||
+    url.includes('clan-state.json')
+  ) {
     return;
   }
   event.respondWith(
