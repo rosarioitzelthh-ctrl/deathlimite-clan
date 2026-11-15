@@ -1,6 +1,6 @@
 {
-  "version": 709,
-  "updatedAt": "2026-11-15T00:01:38.156Z",
+  "version": 720,
+  "updatedAt": "2026-11-15T05:02:18.190Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -35,6 +35,38 @@
     }
   },
   "members": [
+    {
+      "id": "m-1794713727201",
+      "nick": "2895823869",
+      "previousNick": "",
+      "ffId": "2895823869",
+      "password": "7272ueue773",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#ff4500",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-15T03:35:27.201Z"
+    },
+    {
+      "id": "m-1794713305554",
+      "nick": "JD_exarhz",
+      "previousNick": "",
+      "ffId": "7388010020",
+      "password": "exar2012",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#06b6d4",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-15T03:28:25.555Z"
+    },
     {
       "id": "m-1794626398038",
       "nick": "༒ㅤʏᴜɴᴀ_⸙♪",
@@ -114,7 +146,7 @@
       "updatedAt": "2026-11-14T19:27:12.462Z",
       "previousNick": "Tucán",
       "gameRole": "🔥 Rusher",
-      "readyForWar": true
+      "readyForWar": false
     },
     {
       "id": "m-1794618918436",
@@ -136,34 +168,6 @@
   "expelledHistory": [],
   "posts": [
     {
-      "id": "p-1794684729223",
-      "authorNick": "Tucan    :(",
-      "isAdmin": false,
-      "cardTitle": "⚔️ Tucan    :(",
-      "imageData": "__PHOTO_REF__",
-      "caption": "Zy",
-      "likes": [
-        "Tucan    :(",
-        "Administrador",
-        "ITZI FIRE"
-      ],
-      "comments": [
-        {
-          "id": "c-1794690396035",
-          "authorNick": "Administrador",
-          "text": "No se ve",
-          "createdAt": "2026-11-14T21:06:36.035Z"
-        },
-        {
-          "id": "c-1794690402930",
-          "authorNick": "Administrador",
-          "text": "Unu",
-          "createdAt": "2026-11-14T21:06:42.930Z"
-        }
-      ],
-      "createdAt": "2026-11-14T19:32:09.223Z"
-    },
-    {
       "id": "p-1794684672550",
       "authorNick": "Administrador",
       "isAdmin": true,
@@ -172,7 +176,8 @@
       "caption": "Guaoo 80 de placas!!",
       "likes": [
         "Administrador",
-        "ITZI FIRE"
+        "ITZI FIRE",
+        "Tucan    :("
       ],
       "comments": [],
       "createdAt": "2026-11-14T19:31:12.551Z"
