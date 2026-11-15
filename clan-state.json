@@ -1,6 +1,6 @@
 {
-  "version": 693,
-  "updatedAt": "2026-11-14T19:52:44.034Z",
+  "version": 709,
+  "updatedAt": "2026-11-15T00:01:38.156Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -23,15 +23,15 @@
     },
     "cloudSyncUrl": "",
     "lastBroadcastNotification": {
-      "id": "notif-1794684712677",
-      "title": "⚔️ ¡ALÍSTENSE PARA LA GUERRA DE CLANES! (1:00 PM)",
-      "body": "¡Alístense todos en ⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄! Hoy es día de Guerra de Clanes. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! 😂🔥",
-      "sentAt": "2026-11-14T19:31:52.677Z"
+      "id": "notif-1794700898146",
+      "title": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! (6:00 PM)",
+      "body": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! Todos a jugar ya. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! ⚔️🏅 El que no haga placas suma falta. 3 faltas y son expulsadosssss 👹👹👹👹",
+      "sentAt": "2026-11-15T00:01:38.146Z"
     },
     "minPlacasGuerra": 80,
     "warNotifConfig": {
       "msg1pm": "¡Alístense todos en ⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄! Hoy es día de Guerra de Clanes. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! 😂🔥",
-      "msg6pm": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! Todos a jugar ya. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! ⚔️🏅 El que no haga placas suma falta. 3 faltasmás y son expulsadosssss 👹👹👹👹"
+      "msg6pm": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! Todos a jugar ya. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! ⚔️🏅 El que no haga placas suma falta. 3 faltas y son expulsadosssss 👹👹👹👹"
     }
   },
   "members": [
@@ -49,7 +49,7 @@
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T19:52:44.034Z"
+      "updatedAt": "2026-11-14T21:05:30.966Z"
     },
     {
       "id": "m-1794623906672",
@@ -128,7 +128,7 @@
       "honor": 6500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T19:27:14.321Z",
+      "updatedAt": "2026-11-14T21:05:54.721Z",
       "readyForWar": false,
       "gameRole": "👑 IGL / Capitán"
     }
@@ -143,9 +143,24 @@
       "imageData": "__PHOTO_REF__",
       "caption": "Zy",
       "likes": [
-        "Tucan    :("
+        "Tucan    :(",
+        "Administrador",
+        "ITZI FIRE"
       ],
-      "comments": [],
+      "comments": [
+        {
+          "id": "c-1794690396035",
+          "authorNick": "Administrador",
+          "text": "No se ve",
+          "createdAt": "2026-11-14T21:06:36.035Z"
+        },
+        {
+          "id": "c-1794690402930",
+          "authorNick": "Administrador",
+          "text": "Unu",
+          "createdAt": "2026-11-14T21:06:42.930Z"
+        }
+      ],
       "createdAt": "2026-11-14T19:32:09.223Z"
     },
     {
@@ -156,7 +171,8 @@
       "imageData": "__PHOTO_REF__",
       "caption": "Guaoo 80 de placas!!",
       "likes": [
-        "Administrador"
+        "Administrador",
+        "ITZI FIRE"
       ],
       "comments": [],
       "createdAt": "2026-11-14T19:31:12.551Z"
