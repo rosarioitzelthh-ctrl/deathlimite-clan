@@ -1,6 +1,6 @@
 {
-  "version": 720,
-  "updatedAt": "2026-11-15T05:02:18.190Z",
+  "version": 731,
+  "updatedAt": "2026-11-15T20:00:30.091Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -36,8 +36,40 @@
   },
   "members": [
     {
+      "id": "m-1794772366794",
+      "nick": "☆•SRamos•☆",
+      "previousNick": "8571421803",
+      "ffId": "8571421803",
+      "password": "CHAVA07RAMOS",
+      "role": "Integrante",
+      "gameRole": "🛡️ Soporte",
+      "avatarColor": "#3b82f6",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-15T19:56:03.424Z"
+    },
+    {
+      "id": "m-1794767336478",
+      "nick": "Aˡᵉʲᵃⁿᵈʳᵒᥫᩣ",
+      "previousNick": "",
+      "ffId": "1579280214",
+      "password": "Gabo24090",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#ec4899",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-15T18:28:56.478Z"
+    },
+    {
       "id": "m-1794713727201",
-      "nick": "2895823869",
+      "nick": "Juanjo",
       "previousNick": "",
       "ffId": "2895823869",
       "password": "7272ueue773",
@@ -49,7 +81,7 @@
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-15T03:35:27.201Z"
+      "updatedAt": "2026-11-15T19:26:13.172Z"
     },
     {
       "id": "m-1794713305554",
@@ -92,12 +124,12 @@
       "role": "Integrante",
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
-      "readyForWar": true,
-      "placas": 80,
+      "readyForWar": false,
+      "placas": 184,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-14T19:27:07.816Z"
+      "updatedAt": "2026-11-15T19:29:42.677Z"
     },
     {
       "id": "m-1794623607366",
@@ -408,6 +440,17 @@
     }
   ],
   "complaints": [
+    {
+      "id": "q-1794772742582",
+      "category": "Guerra de Clanes",
+      "isAnonymous": true,
+      "authorNick": "Anónimo",
+      "deviceToken": "dev-1794696862773-vqvtvei",
+      "message": "Chayo es muy migajera",
+      "status": "Pendiente",
+      "adminReply": "",
+      "createdAt": "2026-11-15T19:59:02.582Z"
+    },
     {
       "id": "q-1794624442135",
       "category": "Guerra de Clanes",
