@@ -1,6 +1,6 @@
 {
-  "version": 745,
-  "updatedAt": "2026-11-16T08:44:47.554Z",
+  "version": 771,
+  "updatedAt": "2026-11-16T21:45:02.740Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -36,6 +36,22 @@
   },
   "members": [
     {
+      "id": "m-1794864960431",
+      "nick": "あㅤFacxㅤoNㅤ모ㅤ",
+      "previousNick": "",
+      "ffId": "6749174212",
+      "password": "fackx",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#eab308",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-16T21:45:02.732Z"
+    },
+    {
       "id": "m-1794788919335",
       "nick": "ᴮᵀㅤHANNAHㅤ౨ৎ",
       "previousNick": "",
@@ -49,7 +65,7 @@
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T00:28:39.337Z"
+      "updatedAt": "2026-11-16T20:18:23.210Z"
     },
     {
       "id": "m-1794772366794",
