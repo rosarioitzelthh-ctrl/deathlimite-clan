@@ -1,7 +1,7 @@
 name: Cloud DB 24-7 Sync
 on:
   schedule:
-    - cron: '*/25 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -24,6 +24,15 @@ jobs:
             const apiUrl = "https://api.github.com/repos/" + repo + "/contents/clan-state.json";
             const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "gh-action" };
 
+            function decodeRaw(raw) {
+              const t = (raw || "").trim();
+              if (t.startsWith("GZ:")) {
+                return JSON.parse(zlib.gunzipSync(Buffer.from(t.slice(3), "base64")).toString("utf8"));
+              }
+              if (t.startsWith("{")) return JSON.parse(t);
+              return null;
+            }
+
             const ghRes = await fetch(apiUrl + "?ref=gh-pages", { headers });
             let ghSha = null, ghState = null;
             if (ghRes.ok) {
@@ -44,11 +53,15 @@ jobs:
             for (let i = lines.length - 1; i >= 0; i--) {
               try {
                 const msg = JSON.parse(lines[i]);
-                if (msg.event === "message" && typeof msg.message === "string" && msg.message.startsWith("GZ:")) {
-                  const json = zlib.gunzipSync(Buffer.from(msg.message.slice(3), "base64")).toString("utf8");
-                  relayState = JSON.parse(json);
-                  break;
+                if (msg.event !== "message") continue;
+                if (typeof msg.message === "string" && (msg.message.startsWith("GZ:") || msg.message.trim().startsWith("{"))) {
+                  relayState = decodeRaw(msg.message);
+                } else if (msg.attachment && msg.attachment.url) {
+                  const attRes = await fetch(msg.attachment.url);
+                  if (attRes.ok) relayState = decodeRaw(await attRes.text());
                 }
+                if (relayState && Array.isArray(relayState.members)) break;
+                relayState = null;
               } catch (e) {}
             }
 
@@ -70,6 +83,8 @@ jobs:
               const gz = "GZ:" + zlib.gzipSync(JSON.stringify(lite)).toString("base64");
               await fetch(topicUrl, { method: "POST", headers: { Title: String(ghState.version || 1) }, body: gz });
               console.log("Refreshed ntfy from ghState");
+            } else {
+              console.log("Already up to date", ghState?.version, relayState?.version);
             }
           })();
           '
