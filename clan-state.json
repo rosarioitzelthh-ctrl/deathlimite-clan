@@ -1,6 +1,6 @@
 {
-  "version": 734,
-  "updatedAt": "2026-11-15T21:04:51.465Z",
+  "version": 735,
+  "updatedAt": "2026-11-16T00:28:39.360Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -35,6 +35,22 @@
     }
   },
   "members": [
+    {
+      "id": "m-1794788919335",
+      "nick": "ᴮᵀㅤHANNAHㅤ౨ৎ",
+      "previousNick": "",
+      "ffId": "823271802",
+      "password": "pozyake6767",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#22c55e",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-16T00:28:39.337Z"
+    },
     {
       "id": "m-1794772366794",
       "nick": "☆•SRamos•☆",
