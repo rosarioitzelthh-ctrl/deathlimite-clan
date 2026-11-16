@@ -129,10 +129,9 @@ class FFClanApp {
       if (msg.attachment && msg.attachment.url) {
         const attRes = await fetch(msg.attachment.url, { cache: 'no-store' });
         if (attRes.ok) {
-          const parsed = await attRes.json();
-          if (parsed && Array.isArray(parsed.members)) {
-            return this.restorePhotosIntoState(parsed);
-          }
+          const rawText = await attRes.text();
+          const decoded = await this.decodeStateFromCloud(rawText);
+          if (decoded) return decoded;
         }
       }
     } catch (e) {}
@@ -2035,7 +2034,7 @@ class FFClanApp {
           </div>
 
           <div class="ig-media-box" ondblclick="app.toggleLike('${post.id}')">
-            ${post.imageData ? `
+            ${post.imageData && post.imageData.startsWith('data:') ? `
               <img src="${post.imageData}" alt="Post" />
             ` : `
               <div class="ig-banner-card">
