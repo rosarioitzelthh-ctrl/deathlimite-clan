@@ -1,6 +1,6 @@
 {
-  "version": 731,
-  "updatedAt": "2026-11-15T20:00:30.091Z",
+  "version": 734,
+  "updatedAt": "2026-11-15T21:04:51.465Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -23,10 +23,10 @@
     },
     "cloudSyncUrl": "",
     "lastBroadcastNotification": {
-      "id": "notif-1794700898146",
-      "title": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! (6:00 PM)",
-      "body": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! Todos a jugar ya. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! ⚔️🏅 El que no haga placas suma falta. 3 faltas y son expulsadosssss 👹👹👹👹",
-      "sentAt": "2026-11-15T00:01:38.146Z"
+      "id": "notif-1794773613409",
+      "title": "⚔️ ¡ALÍSTENSE PARA LA GUERRA DE CLANES! (1:00 PM)",
+      "body": "¡Alístense todos en ⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄! Hoy es día de Guerra de Clanes. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! 😂🔥",
+      "sentAt": "2026-11-15T20:13:33.409Z"
     },
     "minPlacasGuerra": 80,
     "warNotifConfig": {
@@ -59,13 +59,13 @@
       "password": "Gabo24090",
       "role": "Integrante",
       "gameRole": "🔥 Rusher",
-      "avatarColor": "#ec4899",
+      "avatarColor": "#eab308",
       "readyForWar": true,
       "placas": 80,
       "honor": 1500,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-15T18:28:56.478Z"
+      "updatedAt": "2026-11-15T21:04:51.465Z"
     },
     {
       "id": "m-1794713727201",
@@ -447,8 +447,8 @@
       "authorNick": "Anónimo",
       "deviceToken": "dev-1794696862773-vqvtvei",
       "message": "Chayo es muy migajera",
-      "status": "Pendiente",
-      "adminReply": "",
+      "status": "Resuelta",
+      "adminReply": "NOOOOO",
       "createdAt": "2026-11-15T19:59:02.582Z"
     },
     {
