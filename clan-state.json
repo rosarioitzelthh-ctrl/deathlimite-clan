@@ -1,6 +1,6 @@
 {
-  "version": 771,
-  "updatedAt": "2026-11-16T21:45:02.740Z",
+  "version": 776,
+  "updatedAt": "2026-11-16T23:08:15.646Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -35,6 +35,50 @@
     }
   },
   "members": [
+    {
+      "id": "m-1794870461078",
+      "nick": "Arroz",
+      "previousNick": "",
+      "ffId": "8423733299",
+      "password": "papepipopu",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#ff4500",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-16T23:07:41.078Z"
+    },
+    {
+      "id": "m-1794870448654",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#ec4899",
+      "nick": "Abaddom",
+      "ffId": "2070610502",
+      "password": "123",
+      "honor": 1500,
+      "placas": 80,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-16T23:07:28.654Z"
+    },
+    {
+      "id": "m-1794870390552",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#ff4500",
+      "nick": "ᴵᵀ'ˢㅤANNㅤ19y",
+      "ffId": "14500801",
+      "password": "123",
+      "honor": 1500,
+      "placas": 80,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-16T23:06:30.550Z"
+    },
     {
       "id": "m-1794864960431",
       "nick": "あㅤFacxㅤoNㅤ모ㅤ",
@@ -231,6 +275,19 @@
   ],
   "expelledHistory": [],
   "posts": [
+    {
+      "id": "p-1794870490870",
+      "authorNick": "Administrador",
+      "isAdmin": true,
+      "cardTitle": "⚔️ Administrador",
+      "imageData": "__PHOTO_REF__",
+      "caption": "Felicidades",
+      "likes": [
+        "Administrador"
+      ],
+      "comments": [],
+      "createdAt": "2026-11-16T23:08:10.870Z"
+    },
     {
       "id": "p-1794684672550",
       "authorNick": "Administrador",
