@@ -1,6 +1,6 @@
 {
-  "version": 776,
-  "updatedAt": "2026-11-16T23:08:15.646Z",
+  "version": 1073,
+  "updatedAt": "2026-11-18T17:41:07.315Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -45,11 +45,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#ff4500",
       "readyForWar": true,
-      "placas": 80,
-      "honor": 1500,
+      "placas": 50,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T23:07:41.078Z"
+      "updatedAt": "2026-11-18T14:12:35.344Z"
     },
     {
       "id": "m-1794870448654",
@@ -59,11 +59,11 @@
       "nick": "Abaddom",
       "ffId": "2070610502",
       "password": "123",
-      "honor": 1500,
-      "placas": 80,
+      "honor": 0,
+      "placas": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T23:07:28.654Z"
+      "updatedAt": "2026-11-18T14:12:32.718Z"
     },
     {
       "id": "m-1794870390552",
@@ -73,11 +73,11 @@
       "nick": "ᴵᵀ'ˢㅤANNㅤ19y",
       "ffId": "14500801",
       "password": "123",
-      "honor": 1500,
-      "placas": 80,
+      "honor": 0,
+      "placas": 50,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T23:06:30.550Z"
+      "updatedAt": "2026-11-18T14:11:52.153Z"
     },
     {
       "id": "m-1794864960431",
@@ -89,11 +89,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
       "readyForWar": true,
-      "placas": 80,
-      "honor": 1500,
+      "placas": 0,
+      "honor": 250,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T21:45:02.732Z"
+      "updatedAt": "2026-11-18T14:10:19.506Z"
     },
     {
       "id": "m-1794788919335",
@@ -105,11 +105,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#22c55e",
       "readyForWar": true,
-      "placas": 80,
-      "honor": 1500,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T20:18:23.210Z"
+      "updatedAt": "2026-11-18T14:10:17.453Z"
     },
     {
       "id": "m-1794772366794",
@@ -121,11 +121,11 @@
       "gameRole": "🛡️ Soporte",
       "avatarColor": "#3b82f6",
       "readyForWar": true,
-      "placas": 115,
-      "honor": 1500,
+      "placas": 50,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:44:47.553Z"
+      "updatedAt": "2026-11-18T16:58:45.096Z"
     },
     {
       "id": "m-1794767336478",
@@ -137,11 +137,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
       "readyForWar": true,
-      "placas": 80,
-      "honor": 1500,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-15T21:04:51.465Z"
+      "updatedAt": "2026-11-18T14:10:13.606Z"
     },
     {
       "id": "m-1794713727201",
@@ -153,11 +153,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#ff4500",
       "readyForWar": true,
-      "placas": 80,
-      "honor": 2762,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:44:03.902Z"
+      "updatedAt": "2026-11-18T14:10:11.601Z"
     },
     {
       "id": "m-1794713305554",
@@ -169,11 +169,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#06b6d4",
       "readyForWar": true,
-      "placas": 134,
-      "honor": 1500,
+      "placas": 50,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:43:35.182Z"
+      "updatedAt": "2026-11-18T17:41:07.315Z"
     },
     {
       "id": "m-1794626398038",
@@ -186,10 +186,10 @@
       "avatarColor": "#ec4899",
       "readyForWar": false,
       "placas": 100,
-      "honor": 1500,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:42:56.420Z"
+      "updatedAt": "2026-11-18T17:07:26.798Z"
     },
     {
       "id": "m-1794623906672",
@@ -201,11 +201,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
       "readyForWar": false,
-      "placas": 184,
-      "honor": 1500,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:42:35.317Z"
+      "updatedAt": "2026-11-18T14:10:05.360Z"
     },
     {
       "id": "m-1794623607366",
@@ -217,11 +217,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#22c55e",
       "readyForWar": true,
-      "placas": 138,
-      "honor": 3976,
+      "placas": 50,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:42:10.406Z"
+      "updatedAt": "2026-11-18T14:14:02.568Z"
     },
     {
       "id": "m-1794621849497",
@@ -233,11 +233,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#3b82f6",
       "readyForWar": true,
-      "placas": 119,
-      "honor": 1500,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:41:34.760Z"
+      "updatedAt": "2026-11-18T14:09:59.847Z"
     },
     {
       "id": "m-1794619614771",
@@ -247,11 +247,11 @@
       "role": "Integrante",
       "avatarColor": "#ff4500",
       "minutosGuerra": 3,
-      "placas": 88,
-      "honor": 2493,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:40:33.411Z",
+      "updatedAt": "2026-11-18T14:09:57.448Z",
       "previousNick": "Tucán",
       "gameRole": "🔥 Rusher",
       "readyForWar": false
@@ -264,11 +264,11 @@
       "role": "Integrante",
       "avatarColor": "#ff4500",
       "minutosGuerra": 3,
-      "placas": 132,
-      "honor": 2038,
+      "placas": 0,
+      "honor": 0,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-16T08:40:03.907Z",
+      "updatedAt": "2026-11-18T14:09:55.210Z",
       "readyForWar": false,
       "gameRole": "👑 IGL / Capitán"
     }
