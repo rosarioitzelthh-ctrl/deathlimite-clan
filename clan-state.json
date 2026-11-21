@@ -1,6 +1,6 @@
 {
-  "version": 1073,
-  "updatedAt": "2026-11-18T17:41:07.315Z",
+  "version": 1074,
+  "updatedAt": "2026-11-21T03:11:21.855Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -35,6 +35,22 @@
     }
   },
   "members": [
+    {
+      "id": "m-1795230681828",
+      "nick": "WERA MVP",
+      "previousNick": "",
+      "ffId": "2112545416",
+      "password": "13042004",
+      "role": "Integrante",
+      "gameRole": "🔥 Rusher",
+      "avatarColor": "#ec4899",
+      "readyForWar": true,
+      "placas": 80,
+      "honor": 1500,
+      "faltasBase": 0,
+      "semanasMas3kPrevias": 0,
+      "updatedAt": "2026-11-21T03:11:21.831Z"
+    },
     {
       "id": "m-1794870461078",
       "nick": "Arroz",
