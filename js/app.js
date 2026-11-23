@@ -1312,10 +1312,11 @@ class FFClanApp {
 
     // 3. FILTRAR LISTA
     const query = (document.getElementById('rosterSearchInput')?.value || '').trim().toLowerCase();
+    const normQuery = this.normalizeNickForMatch(query);
     const filtered = evaluated.filter(({ member, eval: ev }) => {
       if (query) {
-        const matchNick = member.nick.toLowerCase().includes(query);
-        const matchPrev = (member.previousNick || '').toLowerCase().includes(query);
+        const matchNick = member.nick.toLowerCase().includes(query) || (normQuery && this.normalizeNickForMatch(member.nick).includes(normQuery));
+        const matchPrev = (member.previousNick || '').toLowerCase().includes(query) || (normQuery && this.normalizeNickForMatch(member.previousNick).includes(normQuery));
         const matchId = (member.ffId || '').toLowerCase().includes(query);
         if (!matchNick && !matchPrev && !matchId) return false;
       }
@@ -1935,9 +1936,14 @@ class FFClanApp {
         <div class="member-card" id="adminSettingsCard">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
             <h3 style="font-size:1rem; font-weight:900;">👑 Ajustes de Administrador</h3>
-            <button type="button" class="btn btn-fire btn-sm" onclick="app.openOcrHonorModal()">
-              📸 Actualizar Honor por Capturas
-            </button>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-fire btn-sm" onclick="app.openOcrModal('honor')">
+                📸 Capturas Honor
+              </button>
+              <button type="button" class="btn btn-purple btn-sm" onclick="app.openOcrModal('placas')">
+                🏅 Capturas Placas
+              </button>
+            </div>
           </div>
           <form onsubmit="app.saveAdminSettings(event)">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
@@ -2404,19 +2410,32 @@ class FFClanApp {
   }
 
   // ============================================================================
-  // ACTUALIZAR HONOR VIENDO CAPTURAS DE PANTALLA (OCR + REVISIÓN VISUAL)
+  // ACTUALIZAR HONOR O PLACAS VIENDO CAPTURAS DE PANTALLA (OCR + REVISIÓN VISUAL)
   // ============================================================================
   openOcrHonorModal() {
+    this.openOcrModal('honor');
+  }
+
+  openOcrModal(mode = 'honor') {
     if (!this.isAdmin()) return;
+    const isPlacas = mode === 'placas';
     this.ocrState = {
+      mode: isPlacas ? 'placas' : 'honor',
       images: [],
       selectedImageIdx: 0,
       scanning: false,
       progressText: '',
       detectedMap: {},
       manualEdits: {},
+      searchQuery: '',
       rawLines: []
     };
+    const titleEl = document.getElementById('ocrModalTitle');
+    if (titleEl) {
+      titleEl.textContent = isPlacas
+        ? '🏅 Actualizar Placas de Guerra con Capturas'
+        : '📸 Actualizar Honor con Capturas';
+    }
     const modal = document.getElementById('ocrHonorModal');
     if (!modal) return;
     modal.classList.remove('hidden');
@@ -2440,12 +2459,64 @@ class FFClanApp {
     return this._tesseractPromise;
   }
 
+  normalizeFancyUnicode(str) {
+    const smallCapsMap = {
+      'ᴀ': 'a', 'ʙ': 'b', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ꜰ': 'f', 'ɢ': 'g',
+      'ʜ': 'h', 'ɪ': 'i', 'ᴊ': 'j', 'ᴋ': 'k', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n',
+      'ᴏ': 'o', 'ᴘ': 'p', 'ǫ': 'q', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u',
+      'ᴠ': 'v', 'ᴡ': 'w', 'x': 'x', 'ʏ': 'y', 'ᴢ': 'z',
+      'ᴁ': 'ae', 'ᴃ': 'b', 'ᴆ': 'd', 'ᴈ': 'e', 'ᴉ': 'i', 'ᴊ': 'j', 'ᴌ': 'l',
+      'ᴎ': 'n', 'ᴑ': 'o', 'ᴓ': 'o', 'ᴕ': 'ou', 'ᴘ': 'p', 'ᴙ': 'r', 'ᴚ': 'r',
+      'ᴛ': 't', 'ᴜ': 'u', 'ᴝ': 'u', 'ᴞ': 'u', 'ᴟ': 'm', 'ᴠ': 'v', 'ᴡ': 'w',
+      'ᴢ': 'z', 'ᴣ': 'z', 'ᴦ': 'g', 'ᴧ': 'a', 'ᴨ': 'p', 'ᴩ': 'r', 'ᴪ': 'p',
+      'α': 'a', 'в': 'b', 'ε': 'e', 'ι': 'i', 'κ': 'k', 'м': 'm', 'η': 'n',
+      'σ': 'o', 'ρ': 'p', 'τ': 't', 'υ': 'u', 'χ': 'x', 'ω': 'w',
+      'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x',
+      'к': 'k', 'м': 'm', 'н': 'h', 'т': 't', 'в': 'b',
+      'ⓐ': 'a', 'ⓑ': 'b', 'ⓒ': 'c', 'ⓓ': 'd', 'ⓔ': 'e', 'ⓕ': 'f', 'ⓖ': 'g',
+      'ⓗ': 'h', 'ⓘ': 'i', 'ⓙ': 'j', 'ⓚ': 'k', 'ⓛ': 'l', 'ⓜ': 'm', 'ⓝ': 'n',
+      'ⓞ': 'o', 'ⓟ': 'p', 'ⓠ': 'q', 'ⓡ': 'r', 'ⓢ': 's', 'ⓣ': 't', 'ⓤ': 'u',
+      'ⓥ': 'v', 'ⓦ': 'w', 'ⓧ': 'x', 'ⓨ': 'y', 'ⓩ': 'z',
+      '卂': 'a', '乃': 'b', '匚': 'c', '刀': 'd', '乇': 'e', '下': 'f', 'ム': 'g',
+      '卄': 'h', '工': 'i', '丁': 'j', '长': 'k', 'ㄥ': 'l', '爪': 'm', '几': 'n',
+      '口': 'o', '尸': 'p', 'Ɋ': 'q', '尺': 'r', '丂': 's', 'ㄒ': 't', '凵': 'u',
+      'リ': 'v', '山': 'w', '乂': 'x', 'ㄚ': 'y', '乙': 'z',
+      'ø': 'o', 'Ø': 'o', 'ł': 'l', 'Ł': 'l', 'đ': 'd', 'Đ': 'd', 'ß': 'ss'
+    };
+
+    let s = String(str || '').normalize('NFKC');
+    let out = '';
+    for (const ch of s) {
+      const lower = ch.toLowerCase();
+      if (smallCapsMap[ch]) {
+        out += smallCapsMap[ch];
+      } else if (smallCapsMap[lower]) {
+        out += smallCapsMap[lower];
+      } else {
+        out += ch;
+      }
+    }
+    // Quitar acentos y caracteres invisibles de Free Fire
+    return out
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\u200B-\u200D\uFEFF\u3164\u00A0]/g, '')
+      .toLowerCase();
+  }
+
   normalizeNickForMatch(str) {
-    return String(str || '')
-      .normalize('NFKC')
-      .toLowerCase()
-      .replace(/[\u200B-\u200D\uFEFF\u3164]/g, '')
-      .replace(/[^a-z0-9áéíóúñü]/g, '');
+    return this.normalizeFancyUnicode(str).replace(/[^a-z0-9]/g, '');
+  }
+
+  toOcrSkeleton(str) {
+    return this.normalizeNickForMatch(str)
+      .replace(/0/g, 'o')
+      .replace(/1/g, 'i')
+      .replace(/3/g, 'e')
+      .replace(/4/g, 'a')
+      .replace(/5/g, 's')
+      .replace(/7/g, 't')
+      .replace(/8/g, 'b');
   }
 
   levenshtein(a, b) {
@@ -2464,13 +2535,12 @@ class FFClanApp {
 
   findBestMemberMatchFromLine(lineText) {
     const cleanLine = this.normalizeNickForMatch(lineText);
+    const skelLine = this.toOcrSkeleton(lineText);
     if (cleanLine.length < 2) return null;
 
-    const rawTokens = String(lineText || '')
-      .normalize('NFKC')
-      .toLowerCase()
-      .split(/[\s|•·,;:()[\]{}]+/)
-      .map(t => t.replace(/[^a-z0-9áéíóúñü]/g, ''))
+    const rawTokens = this.normalizeFancyUnicode(lineText)
+      .split(/[\s|•·,;:()[\]{}_-]+/)
+      .map(t => t.replace(/[^a-z0-9]/g, ''))
       .filter(t => t.length >= 3);
 
     let bestMember = null;
@@ -2480,22 +2550,22 @@ class FFClanApp {
       const candidates = [m.nick, m.previousNick].filter(Boolean);
       for (const rawName of candidates) {
         const normName = this.normalizeNickForMatch(rawName);
+        const skelName = this.toOcrSkeleton(rawName);
         if (normName.length < 2) continue;
 
         let score = 0;
-        if (cleanLine.includes(normName)) {
+        if (cleanLine.includes(normName) || (skelName.length >= 3 && skelLine.includes(skelName))) {
           score = 1.0;
         } else {
-          const nameTokens = String(rawName)
-            .normalize('NFKC')
-            .toLowerCase()
+          const nameTokens = this.normalizeFancyUnicode(rawName)
             .split(/[\s•·._-]+/)
-            .map(t => t.replace(/[^a-z0-9áéíóúñü]/g, ''))
+            .map(t => t.replace(/[^a-z0-9]/g, ''))
             .filter(t => t.length >= 3 && t !== 'dl');
 
           for (const nt of nameTokens) {
-            if (cleanLine.includes(nt)) {
-              score = Math.max(score, 0.88);
+            const skelNt = this.toOcrSkeleton(nt);
+            if (cleanLine.includes(nt) || (skelNt.length >= 3 && skelLine.includes(skelNt))) {
+              score = Math.max(score, 0.9);
             }
             for (const rt of rawTokens) {
               const maxLen = Math.max(nt.length, rt.length);
@@ -2527,13 +2597,24 @@ class FFClanApp {
     return bestScore >= 0.7 ? bestMember : null;
   }
 
-  extractHonorFromText(text) {
+  extractStatFromText(text, mode = 'honor') {
+    if (mode === 'placas') {
+      // En Guerra de Clanes las placas suelen ser números de 1 a 5 dígitos (ej. 30, 80, 145, 420)
+      const matches = String(text || '').match(/\d{1,3}(?:[.,]\d{3})+|\d{1,5}/g) || [];
+      const nums = matches
+        .map(s => Number(s.replace(/[.,]/g, '')))
+        .filter(n => Number.isFinite(n) && n >= 0 && n <= 50000);
+      if (nums.length === 0) return null;
+      // Si hay varios números (ej. nivel + placas), preferimos el último o el >= 10
+      const plausible = nums.filter(n => n >= 10);
+      return plausible.length > 0 ? plausible[plausible.length - 1] : nums[nums.length - 1];
+    }
+
     const matches = String(text || '').match(/\d{1,3}(?:[.,\s]\d{3})+|\d{3,6}/g) || [];
     const nums = matches
       .map(s => Number(s.replace(/[.,\s]/g, '')))
       .filter(n => Number.isFinite(n) && n >= 100 && n <= 200000);
     if (nums.length === 0) return null;
-    // En Free Fire el honor semanal/total suele ser el número grande de la fila (>= 100)
     return Math.max(...nums);
   }
 
@@ -2573,8 +2654,11 @@ class FFClanApp {
 
   async runOcrOnScreenshots(imagesToScan) {
     if (!imagesToScan || !imagesToScan.length) return;
+    const mode = this.ocrState?.mode || 'honor';
+    const statLabel = mode === 'placas' ? 'Placas' : 'Honor';
+
     this.ocrState.scanning = true;
-    this.ocrState.progressText = '⏳ Iniciando lector de capturas...';
+    this.ocrState.progressText = `⏳ Iniciando lector de ${statLabel}...`;
     this.renderOcrHonorModal();
 
     try {
@@ -2606,13 +2690,13 @@ class FFClanApp {
           const line = lines[i];
           const member = this.findBestMemberMatchFromLine(line);
           if (member) {
-            let detectedHonor = this.extractHonorFromText(line);
-            if (detectedHonor === null && lines[i + 1]) {
-              detectedHonor = this.extractHonorFromText(lines[i + 1]);
+            let detectedValue = this.extractStatFromText(line, mode);
+            if (detectedValue === null && lines[i + 1]) {
+              detectedValue = this.extractStatFromText(lines[i + 1], mode);
             }
-            if (detectedHonor !== null) {
+            if (detectedValue !== null) {
               this.ocrState.detectedMap[member.id] = {
-                honor: detectedHonor,
+                value: detectedValue,
                 checked: true,
                 sourceLine: line
               };
@@ -2620,9 +2704,9 @@ class FFClanApp {
           }
         }
       }
-      this.ocrState.progressText = `✅ Escaneo listo (${Object.keys(this.ocrState.detectedMap).length} detectados automáticamente). Verifica viendo la captura abajo:`;
+      this.ocrState.progressText = `✅ Escaneo de ${statLabel} listo (${Object.keys(this.ocrState.detectedMap).length} detectados). Revisa viendo la captura abajo:`;
     } catch (err) {
-      this.ocrState.progressText = '⚠️ No se pudo leer automáticamente; puedes ver la captura aquí abajo y escribir el honor directo.';
+      this.ocrState.progressText = `⚠️ No se pudo leer automáticamente; puedes ver la captura aquí abajo y escribir ${statLabel} directo.`;
     } finally {
       this.ocrState.scanning = false;
       this.renderOcrHonorModal();
@@ -2634,10 +2718,19 @@ class FFClanApp {
     this.renderOcrHonorModal();
   }
 
-  updateOcrMemberHonorInput(memberId, val) {
+  updateOcrSearchQuery(q) {
+    this.ocrState.searchQuery = q || '';
+    this.renderOcrOtherMembersList();
+  }
+
+  updateOcrMemberValueInput(memberId, val) {
+    if (val === '' || val === null || val === undefined) {
+      delete this.ocrState.manualEdits[memberId];
+      return;
+    }
     const num = Math.max(0, Number(val) || 0);
     if (this.ocrState.detectedMap[memberId]) {
-      this.ocrState.detectedMap[memberId].honor = num;
+      this.ocrState.detectedMap[memberId].value = num;
       this.ocrState.detectedMap[memberId].checked = true;
     } else {
       this.ocrState.manualEdits[memberId] = num;
@@ -2650,8 +2743,12 @@ class FFClanApp {
     }
   }
 
-  applyOcrHonorUpdates() {
+  applyOcrUpdates() {
     if (!this.isAdmin()) return;
+    const mode = this.ocrState?.mode || 'honor';
+    const field = mode === 'placas' ? 'placas' : 'honor';
+    const statLabel = mode === 'placas' ? 'Placas de Guerra' : 'Honor';
+
     let updatedCount = 0;
     const now = new Date().toISOString();
 
@@ -2659,11 +2756,11 @@ class FFClanApp {
       const detected = this.ocrState.detectedMap[m.id];
       const manual = this.ocrState.manualEdits[m.id];
       if (detected && detected.checked) {
-        m.honor = Math.max(0, Number(detected.honor) || 0);
+        m[field] = Math.max(0, Number(detected.value) || 0);
         m.updatedAt = now;
         updatedCount++;
       } else if (manual !== undefined && manual !== null && manual !== '') {
-        m.honor = Math.max(0, Number(manual) || 0);
+        m[field] = Math.max(0, Number(manual) || 0);
         m.updatedAt = now;
         updatedCount++;
       }
@@ -2675,28 +2772,69 @@ class FFClanApp {
     }
 
     this.closeOcrHonorModal();
-    this.persistAndSync(`✅ ¡Honor actualizado en ${updatedCount} integrante(s) desde tus capturas!`);
+    this.persistAndSync(`✅ ¡${statLabel} actualizado en ${updatedCount} integrante(s) desde tus capturas!`);
+  }
+
+  renderOcrOtherMembersList() {
+    const listEl = document.getElementById('ocrOtherMembersList');
+    if (!listEl) return;
+
+    const st = this.ocrState || { mode: 'honor', detectedMap: {}, manualEdits: {}, searchQuery: '' };
+    const field = st.mode === 'placas' ? 'placas' : 'honor';
+    const members = this.state.members || [];
+    const q = (st.searchQuery || '').trim().toLowerCase();
+    const normQ = this.normalizeNickForMatch(q);
+
+    const otherMembers = members.filter(m => {
+      if (st.detectedMap[m.id]) return false;
+      if (!q) return true;
+      const matchRaw = m.nick.toLowerCase().includes(q) || (m.previousNick || '').toLowerCase().includes(q) || (m.ffId || '').toLowerCase().includes(q);
+      const matchFancy = normQ && (this.normalizeNickForMatch(m.nick).includes(normQ) || this.normalizeNickForMatch(m.previousNick).includes(normQ));
+      return matchRaw || matchFancy;
+    });
+
+    if (otherMembers.length === 0) {
+      listEl.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); padding:8px; text-align:center;">No se encontró ese integrante.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = otherMembers.map(m => {
+      const currentVal = Number(m[field]) || 0;
+      const val = st.manualEdits[m.id] !== undefined ? st.manualEdits[m.id] : '';
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-input); padding:7px 10px; border-radius:10px;">
+          <div style="min-width:0; flex:1;">
+            <div style="font-weight:800; font-size:0.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.escapeHtml(m.nick)}</div>
+            <div style="font-size:0.7rem; color:var(--text-muted);">Actual: ${currentVal.toLocaleString()}</div>
+          </div>
+          <input type="number" min="0" placeholder="${currentVal}" class="form-input" style="width:105px; padding:6px 9px; text-align:right;" value="${val}" oninput="app.updateOcrMemberValueInput('${m.id}', this.value)" />
+        </div>
+      `;
+    }).join('');
   }
 
   renderOcrHonorModal() {
     const body = document.getElementById('ocrHonorModalBody');
     if (!body) return;
 
-    const st = this.ocrState || { images: [], selectedImageIdx: 0, detectedMap: {}, manualEdits: {}, scanning: false, progressText: '' };
+    const st = this.ocrState || { mode: 'honor', images: [], selectedImageIdx: 0, detectedMap: {}, manualEdits: {}, searchQuery: '', scanning: false, progressText: '' };
+    const isPlacas = st.mode === 'placas';
+    const field = isPlacas ? 'placas' : 'honor';
+    const statLabel = isPlacas ? 'Placas de Guerra' : 'Honor';
+
     const members = this.state.members || [];
     const detectedIds = Object.keys(st.detectedMap);
     const detectedMembers = members.filter(m => st.detectedMap[m.id]);
-    const otherMembers = members.filter(m => !st.detectedMap[m.id]);
     const activeImg = st.images[st.selectedImageIdx];
 
     body.innerHTML = `
       <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">
-        Sube 1 o varias capturas de la lista del clan. La app detecta el nombre y su honor automáticamente, y deja la imagen visible para que revises o completes cualquier nombre.
+        Sube 1 o varias capturas de <strong>${statLabel}</strong>. La app reconoce los nombres (aunque tengan letras o fuentes diferentes) y detecta su número automáticamente mientras ves la captura.
       </p>
 
       <div class="form-group">
-        <label class="btn btn-fire btn-block" style="cursor:pointer;">
-          📤 Seleccionar Capturas de Pantalla
+        <label class="btn ${isPlacas ? 'btn-purple' : 'btn-fire'} btn-block" style="cursor:pointer;">
+          📤 Seleccionar Capturas de ${statLabel}
           <input type="file" accept="image/*" multiple style="display:none;" onchange="app.handleOcrScreenshotsSelected(event)" />
         </label>
       </div>
@@ -2733,16 +2871,17 @@ class FFClanApp {
         <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:14px;">
           ${detectedMembers.map(m => {
             const det = st.detectedMap[m.id];
+            const currentVal = Number(m[field]) || 0;
             return `
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.35); padding:8px 10px; border-radius:10px;">
                 <label style="display:flex; align-items:center; gap:8px; min-width:0; flex:1; cursor:pointer;">
                   <input type="checkbox" ${det.checked ? 'checked' : ''} onchange="app.toggleOcrMemberChecked('${m.id}', this.checked)" />
                   <div style="min-width:0;">
                     <div style="font-weight:800; font-size:0.86rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.escapeHtml(m.nick)}</div>
-                    <div style="font-size:0.72rem; color:var(--text-muted);">Actual: ${(Number(m.honor) || 0).toLocaleString()}</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">Actual: ${currentVal.toLocaleString()}</div>
                   </div>
                 </label>
-                <input type="number" min="0" class="form-input" style="width:105px; padding:7px 9px; font-weight:900; text-align:right;" value="${det.honor}" oninput="app.updateOcrMemberHonorInput('${m.id}', this.value)" />
+                <input type="number" min="0" class="form-input" style="width:105px; padding:7px 9px; font-weight:900; text-align:right;" value="${det.value}" oninput="app.updateOcrMemberValueInput('${m.id}', this.value)" />
               </div>
             `;
           }).join('')}
@@ -2750,28 +2889,20 @@ class FFClanApp {
       ` : ''}
 
       <div style="font-size:0.82rem; font-weight:900; color:var(--text-muted); margin-bottom:6px;">
-        📋 ${detectedIds.length > 0 ? 'Otros integrantes (por si faltó alguno viendo la captura):' : 'Integrantes del clan (escribe el honor viendo tu captura):'}
+        📋 ${detectedIds.length > 0 ? 'Buscar o completar otros integrantes:' : 'Buscar integrante (escribe su nombre viendo tu captura):'}
       </div>
-      <div style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; margin-bottom:14px;">
-        ${otherMembers.map(m => {
-          const val = st.manualEdits[m.id] !== undefined ? st.manualEdits[m.id] : '';
-          return `
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-input); padding:7px 10px; border-radius:10px;">
-              <div style="min-width:0; flex:1;">
-                <div style="font-weight:800; font-size:0.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.escapeHtml(m.nick)}</div>
-                <div style="font-size:0.7rem; color:var(--text-muted);">Actual: ${(Number(m.honor) || 0).toLocaleString()}</div>
-              </div>
-              <input type="number" min="0" placeholder="${Number(m.honor) || 0}" class="form-input" style="width:105px; padding:6px 9px; text-align:right;" value="${val}" oninput="app.updateOcrMemberHonorInput('${m.id}', this.value)" />
-            </div>
-          `;
-        }).join('')}
+      <div style="margin-bottom:8px;">
+        <input type="text" class="form-input" style="padding:9px 11px; font-size:0.86rem;" placeholder="🔍 Buscar por nombre (ej. yuna, tucan, id)..." value="${this.escapeHtml(st.searchQuery || '')}" oninput="app.updateOcrSearchQuery(this.value)" />
       </div>
+      <div id="ocrOtherMembersList" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; margin-bottom:14px;"></div>
 
       <div style="display:flex; gap:8px;">
         <button type="button" class="btn btn-secondary btn-block" onclick="app.closeOcrHonorModal()">Cancelar</button>
-        <button type="button" class="btn btn-success btn-block" onclick="app.applyOcrHonorUpdates()">💾 Guardar Honor</button>
+        <button type="button" class="btn btn-success btn-block" onclick="app.applyOcrUpdates()">💾 Guardar ${statLabel}</button>
       </div>
     `;
+
+    this.renderOcrOtherMembersList();
   }
 
   openSyncModal() {
