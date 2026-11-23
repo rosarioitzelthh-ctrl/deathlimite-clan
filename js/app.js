@@ -1943,6 +1943,9 @@ class FFClanApp {
               <button type="button" class="btn btn-purple btn-sm" onclick="app.openOcrModal('placas')">
                 🏅 Capturas Placas
               </button>
+              <button type="button" class="btn btn-success btn-sm" onclick="app.openOcrModal('members')">
+                🆔 Capturas ID/Nombres
+              </button>
             </div>
           </div>
           <form onsubmit="app.saveAdminSettings(event)">
@@ -2418,23 +2421,26 @@ class FFClanApp {
 
   openOcrModal(mode = 'honor') {
     if (!this.isAdmin()) return;
-    const isPlacas = mode === 'placas';
+    const validMode = mode === 'placas' ? 'placas' : mode === 'members' ? 'members' : 'honor';
     this.ocrState = {
-      mode: isPlacas ? 'placas' : 'honor',
+      mode: validMode,
       images: [],
       selectedImageIdx: 0,
       scanning: false,
       progressText: '',
       detectedMap: {},
       manualEdits: {},
+      memberRows: [],
       searchQuery: '',
       rawLines: []
     };
     const titleEl = document.getElementById('ocrModalTitle');
     if (titleEl) {
-      titleEl.textContent = isPlacas
+      titleEl.textContent = validMode === 'placas'
         ? '🏅 Actualizar Placas de Guerra con Capturas'
-        : '📸 Actualizar Honor con Capturas';
+        : validMode === 'members'
+          ? '🆔 Agregar / Actualizar IDs y Nombres con Capturas'
+          : '📸 Actualizar Honor con Capturas';
     }
     const modal = document.getElementById('ocrHonorModal');
     if (!modal) return;
@@ -2554,7 +2560,12 @@ class FFClanApp {
         if (normName.length < 2) continue;
 
         let score = 0;
-        if (cleanLine.includes(normName) || (skelName.length >= 3 && skelLine.includes(skelName))) {
+        if (
+          cleanLine.includes(normName) ||
+          (normName.length >= 4 && cleanLine.length >= 3 && normName.includes(cleanLine)) ||
+          (skelName.length >= 3 && skelLine.includes(skelName)) ||
+          (skelName.length >= 4 && skelLine.length >= 3 && skelName.includes(skelLine))
+        ) {
           score = 1.0;
         } else {
           const nameTokens = this.normalizeFancyUnicode(rawName)
@@ -2568,6 +2579,9 @@ class FFClanApp {
               score = Math.max(score, 0.9);
             }
             for (const rt of rawTokens) {
+              if (rt.length >= 3 && (nt.includes(rt) || rt.includes(nt))) {
+                score = Math.max(score, 0.86);
+              }
               const maxLen = Math.max(nt.length, rt.length);
               if (maxLen >= 4) {
                 const dist = this.levenshtein(nt, rt);
@@ -2579,6 +2593,9 @@ class FFClanApp {
 
           if (score === 0 && normName.length >= 4) {
             for (const rt of rawTokens) {
+              if (rt.length >= 3 && (normName.includes(rt) || rt.includes(normName))) {
+                score = Math.max(score, 0.85);
+              }
               const maxLen = Math.max(normName.length, rt.length);
               const dist = this.levenshtein(normName, rt);
               const sim = 1 - dist / maxLen;
@@ -2652,10 +2669,121 @@ class FFClanApp {
     await this.runOcrOnScreenshots(loaded);
   }
 
+  extractFfIdFromText(text) {
+    const m = String(text || '').match(/(?:id[:\s]*)?(\d{7,12})\b/i);
+    return m ? m[1] : null;
+  }
+
+  cleanNickFromIdLine(text) {
+    let cleaned = String(text || '')
+      .replace(/id[:\s]*\d{5,12}/gi, ' ')
+      .replace(/\b\d{7,12}\b/g, ' ')
+      .replace(/\b(nv|lv|lvl|nivel|lider|decano|veterano|miembro|integrante)\b\.?\s*\d*/gi, ' ')
+      .replace(/^\d{1,3}[\s.)-]+/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned;
+  }
+
+  processMembersOcrLines(lines) {
+    const members = this.state.members || [];
+    const seenKeys = new Set(
+      (this.ocrState.memberRows || []).map(r => r.ffId || this.normalizeNickForMatch(r.nick))
+    );
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const ffId = this.extractFfIdFromText(line);
+      let candidateNick = this.cleanNickFromIdLine(line);
+
+      // Si la línea solo traía "ID: 1234567890", el nombre suele estar en la línea anterior
+      if (ffId && this.normalizeNickForMatch(candidateNick).length < 2 && i > 0) {
+        const prevClean = this.cleanNickFromIdLine(lines[i - 1]);
+        if (this.normalizeNickForMatch(prevClean).length >= 2) {
+          candidateNick = prevClean;
+        }
+      }
+
+      if (!ffId && this.normalizeNickForMatch(candidateNick).length < 3) continue;
+
+      const byId = ffId ? members.find(m => m.ffId === ffId) : null;
+      const byNick = candidateNick ? this.findBestMemberMatchFromLine(candidateNick) : null;
+      const matched = byId || byNick;
+
+      const dedupKey = ffId || (matched ? matched.id : this.normalizeNickForMatch(candidateNick));
+      if (!dedupKey || seenKeys.has(dedupKey)) continue;
+      seenKeys.add(dedupKey);
+
+      let action = 'add';
+      if (matched) {
+        const sameId = !ffId || matched.ffId === ffId;
+        const sameNick = !candidateNick || matched.nick === candidateNick;
+        action = (sameId && sameNick) ? 'unchanged' : 'update';
+      }
+
+      this.ocrState.memberRows.push({
+        rowId: 'row-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        matchedMemberId: matched ? matched.id : null,
+        matchedOldNick: matched ? matched.nick : '',
+        matchedOldId: matched ? matched.ffId : '',
+        nick: candidateNick || (matched ? matched.nick : ''),
+        ffId: ffId || (matched ? matched.ffId : ''),
+        action,
+        checked: action !== 'unchanged'
+      });
+    }
+  }
+
+  addManualOcrMemberRow() {
+    if (!this.ocrState) return;
+    if (!this.ocrState.memberRows) this.ocrState.memberRows = [];
+    this.ocrState.memberRows.push({
+      rowId: 'row-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      matchedMemberId: null,
+      matchedOldNick: '',
+      matchedOldId: '',
+      nick: '',
+      ffId: '',
+      action: 'add',
+      checked: true
+    });
+    this.renderOcrHonorModal();
+  }
+
+  updateOcrMemberRowField(rowId, field, value) {
+    const row = (this.ocrState?.memberRows || []).find(r => r.rowId === rowId);
+    if (!row) return;
+    row[field] = String(value || '').trim();
+    row.checked = true;
+
+    // Re-evaluar si el ID o nombre parcial coincide con alguien ya existente
+    const members = this.state.members || [];
+    const byId = row.ffId ? members.find(m => m.ffId === row.ffId) : null;
+    const byNick = row.nick ? this.findBestMemberMatchFromLine(row.nick) : null;
+    const matched = byId || byNick;
+    row.matchedMemberId = matched ? matched.id : null;
+    row.matchedOldNick = matched ? matched.nick : '';
+    row.matchedOldId = matched ? matched.ffId : '';
+    row.action = matched ? 'update' : 'add';
+
+    const badge = document.getElementById(`ocrRowBadge-${rowId}`);
+    if (badge) {
+      badge.textContent = matched
+        ? `🔄 Actualizar a: ${matched.nick} (${matched.ffId || 'sin ID'})`
+        : '➕ Nuevo integrante';
+      badge.style.color = matched ? '#fbbf24' : '#4ade80';
+    }
+  }
+
+  toggleOcrMemberRowChecked(rowId, checked) {
+    const row = (this.ocrState?.memberRows || []).find(r => r.rowId === rowId);
+    if (row) row.checked = checked;
+  }
+
   async runOcrOnScreenshots(imagesToScan) {
     if (!imagesToScan || !imagesToScan.length) return;
     const mode = this.ocrState?.mode || 'honor';
-    const statLabel = mode === 'placas' ? 'Placas' : 'Honor';
+    const statLabel = mode === 'placas' ? 'Placas' : mode === 'members' ? 'IDs y Nombres' : 'Honor';
 
     this.ocrState.scanning = true;
     this.ocrState.progressText = `⏳ Iniciando lector de ${statLabel}...`;
@@ -2686,25 +2814,32 @@ class FFClanApp {
 
         this.ocrState.rawLines.push(...lines);
 
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const member = this.findBestMemberMatchFromLine(line);
-          if (member) {
-            let detectedValue = this.extractStatFromText(line, mode);
-            if (detectedValue === null && lines[i + 1]) {
-              detectedValue = this.extractStatFromText(lines[i + 1], mode);
-            }
-            if (detectedValue !== null) {
-              this.ocrState.detectedMap[member.id] = {
-                value: detectedValue,
-                checked: true,
-                sourceLine: line
-              };
+        if (mode === 'members') {
+          this.processMembersOcrLines(lines);
+        } else {
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const member = this.findBestMemberMatchFromLine(line);
+            if (member) {
+              let detectedValue = this.extractStatFromText(line, mode);
+              if (detectedValue === null && lines[i + 1]) {
+                detectedValue = this.extractStatFromText(lines[i + 1], mode);
+              }
+              if (detectedValue !== null) {
+                this.ocrState.detectedMap[member.id] = {
+                  value: detectedValue,
+                  checked: true,
+                  sourceLine: line
+                };
+              }
             }
           }
         }
       }
-      this.ocrState.progressText = `✅ Escaneo de ${statLabel} listo (${Object.keys(this.ocrState.detectedMap).length} detectados). Revisa viendo la captura abajo:`;
+      const totalFound = mode === 'members'
+        ? (this.ocrState.memberRows || []).length
+        : Object.keys(this.ocrState.detectedMap).length;
+      this.ocrState.progressText = `✅ Escaneo de ${statLabel} listo (${totalFound} detectados). Revisa viendo la captura abajo:`;
     } catch (err) {
       this.ocrState.progressText = `⚠️ No se pudo leer automáticamente; puedes ver la captura aquí abajo y escribir ${statLabel} directo.`;
     } finally {
@@ -2746,11 +2881,73 @@ class FFClanApp {
   applyOcrUpdates() {
     if (!this.isAdmin()) return;
     const mode = this.ocrState?.mode || 'honor';
+    const now = new Date().toISOString();
+
+    if (mode === 'members') {
+      let addedCount = 0;
+      let updatedCount = 0;
+      const colors = ['#ff4500', '#ec4899', '#3b82f6', '#22c55e', '#eab308', '#8b5cf6', '#06b6d4'];
+      if (!this.state.members) this.state.members = [];
+
+      for (const row of (this.ocrState.memberRows || [])) {
+        if (!row.checked) continue;
+        const nick = (row.nick || '').trim();
+        const ffId = (row.ffId || '').trim();
+        if (!nick && !ffId) continue;
+
+        let target = ffId ? this.state.members.find(m => m.ffId === ffId) : null;
+        if (!target && row.matchedMemberId) {
+          target = this.state.members.find(m => m.id === row.matchedMemberId);
+        }
+        if (!target && nick) {
+          target = this.findBestMemberMatchFromLine(nick);
+        }
+
+        if (target) {
+          if (nick && target.nick !== nick) {
+            target.previousNick = target.nick;
+            target.nick = nick;
+          }
+          if (ffId && target.ffId !== ffId) {
+            target.ffId = ffId;
+          }
+          target.updatedAt = now;
+          updatedCount++;
+        } else {
+          this.state.members.unshift({
+            id: 'm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+            nick: nick || `ID ${ffId}`,
+            previousNick: '',
+            ffId: ffId || '',
+            password: '123',
+            role: 'Integrante',
+            gameRole: '🔥 Rusher',
+            avatarColor: colors[this.state.members.length % colors.length],
+            readyForWar: false,
+            placas: this.getMinPlacasGuerra(),
+            honor: this.getMinHonorKeep(),
+            faltasBase: 0,
+            semanasMas3kPrevias: 0,
+            updatedAt: now
+          });
+          addedCount++;
+        }
+      }
+
+      if (addedCount === 0 && updatedCount === 0) {
+        this.showToast('⚠️ No hay cambios seleccionados para guardar');
+        return;
+      }
+
+      this.closeOcrHonorModal();
+      this.persistAndSync(`✅ ¡Listo! ${addedCount} agregado(s) y ${updatedCount} actualizado(s)`);
+      return;
+    }
+
     const field = mode === 'placas' ? 'placas' : 'honor';
     const statLabel = mode === 'placas' ? 'Placas de Guerra' : 'Honor';
 
     let updatedCount = 0;
-    const now = new Date().toISOString();
 
     for (const m of (this.state.members || [])) {
       const detected = this.ocrState.detectedMap[m.id];
@@ -2817,23 +3014,26 @@ class FFClanApp {
     const body = document.getElementById('ocrHonorModalBody');
     if (!body) return;
 
-    const st = this.ocrState || { mode: 'honor', images: [], selectedImageIdx: 0, detectedMap: {}, manualEdits: {}, searchQuery: '', scanning: false, progressText: '' };
+    const st = this.ocrState || { mode: 'honor', images: [], selectedImageIdx: 0, detectedMap: {}, manualEdits: {}, memberRows: [], searchQuery: '', scanning: false, progressText: '' };
     const isPlacas = st.mode === 'placas';
+    const isMembers = st.mode === 'members';
     const field = isPlacas ? 'placas' : 'honor';
-    const statLabel = isPlacas ? 'Placas de Guerra' : 'Honor';
+    const statLabel = isPlacas ? 'Placas de Guerra' : isMembers ? 'IDs y Nombres' : 'Honor';
 
     const members = this.state.members || [];
     const detectedIds = Object.keys(st.detectedMap);
     const detectedMembers = members.filter(m => st.detectedMap[m.id]);
     const activeImg = st.images[st.selectedImageIdx];
 
-    body.innerHTML = `
+    const previewSection = `
       <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">
-        Sube 1 o varias capturas de <strong>${statLabel}</strong>. La app reconoce los nombres (aunque tengan letras o fuentes diferentes) y detecta su número automáticamente mientras ves la captura.
+        ${isMembers
+          ? 'Sube 1 o varias capturas con los <strong>IDs y Nombres</strong>. Si no existe ni el ID ni el nombre, lo agrega; si ya estaba el ID o parte del nombre (sin símbolos), lo encuentra y actualiza.'
+          : `Sube 1 o varias capturas de <strong>${statLabel}</strong>. La app reconoce los nombres (aunque tengan letras o fuentes diferentes) y detecta su número automáticamente mientras ves la captura.`}
       </p>
 
       <div class="form-group">
-        <label class="btn ${isPlacas ? 'btn-purple' : 'btn-fire'} btn-block" style="cursor:pointer;">
+        <label class="btn ${isPlacas ? 'btn-purple' : isMembers ? 'btn-success' : 'btn-fire'} btn-block" style="cursor:pointer;">
           📤 Seleccionar Capturas de ${statLabel}
           <input type="file" accept="image/*" multiple style="display:none;" onchange="app.handleOcrScreenshotsSelected(event)" />
         </label>
@@ -2863,6 +3063,59 @@ class FFClanApp {
           ` : ''}
         </div>
       ` : ''}
+    `;
+
+    if (isMembers) {
+      const rows = st.memberRows || [];
+      body.innerHTML = `
+        ${previewSection}
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.82rem; font-weight:900; color:#4ade80;">
+            🆔 Detectados / Por agregar (${rows.length}):
+          </span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="app.addManualOcrMemberRow()">
+            ➕ Agregar viendo captura
+          </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; max-height:290px; overflow-y:auto; margin-bottom:14px;">
+          ${rows.length === 0 ? `
+            <div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:12px; background:var(--bg-input); border-radius:10px;">
+              Sube una captura o toca "➕ Agregar viendo captura" para capturar un Nick e ID.
+            </div>
+          ` : rows.map(r => {
+            const isUpdate = Boolean(r.matchedMemberId);
+            const badgeText = isUpdate
+              ? `🔄 Actualizar a: ${r.matchedOldNick} (${r.matchedOldId || 'sin ID'})`
+              : '➕ Nuevo integrante';
+            return `
+              <div style="background:${isUpdate ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)'}; border:1px solid ${isUpdate ? 'rgba(245,158,11,0.35)' : 'rgba(34,197,94,0.35)'}; padding:9px 10px; border-radius:10px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
+                  <label style="display:flex; align-items:center; gap:6px; font-size:0.74rem; font-weight:900; color:${isUpdate ? '#fbbf24' : '#4ade80'}; cursor:pointer;">
+                    <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="app.toggleOcrMemberRowChecked('${r.rowId}', this.checked)" />
+                    <span id="ocrRowBadge-${r.rowId}">${this.escapeHtml(badgeText)}</span>
+                  </label>
+                </div>
+                <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:6px;">
+                  <input type="text" class="form-input" style="padding:7px 9px; font-size:0.84rem;" placeholder="Nick de Free Fire" value="${this.escapeHtml(r.nick)}" oninput="app.updateOcrMemberRowField('${r.rowId}', 'nick', this.value)" />
+                  <input type="text" class="form-input" style="padding:7px 9px; font-size:0.84rem;" placeholder="ID de Free Fire" value="${this.escapeHtml(r.ffId)}" oninput="app.updateOcrMemberRowField('${r.rowId}', 'ffId', this.value)" />
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary btn-block" onclick="app.closeOcrHonorModal()">Cancelar</button>
+          <button type="button" class="btn btn-success btn-block" onclick="app.applyOcrUpdates()">💾 Guardar y Agregar</button>
+        </div>
+      `;
+      return;
+    }
+
+    body.innerHTML = `
+      ${previewSection}
 
       ${detectedMembers.length > 0 ? `
         <div style="font-size:0.82rem; font-weight:900; color:#4ade80; margin-bottom:6px;">
