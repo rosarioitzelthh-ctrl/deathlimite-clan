@@ -1,6 +1,6 @@
 {
-  "version": 1158,
-  "updatedAt": "2026-11-23T06:44:15.211Z",
+  "version": 1219,
+  "updatedAt": "2026-11-23T13:53:52.228Z",
   "clanInfo": {
     "name": "⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan",
     "tag": "DL•",
@@ -13,7 +13,7 @@
     "rules": {
       "minWarMinutes": 3,
       "maxFaults": 3,
-      "minHonorKeep": 1500,
+      "minHonorKeep": 1000,
       "honorClearThreshold": 3000,
       "weeksToClearFaults": 2
     },
@@ -32,7 +32,9 @@
     "warNotifConfig": {
       "msg1pm": "¡Alístense todos en ⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄! Hoy es día de Guerra de Clanes. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! 😂🔥",
       "msg6pm": "🚨 ¡YA EMPEZÓ LA GUERRA DE CLANES! Todos a jugar ya. Recuerda que si quieres más placas, debes de jugar con los del clan, ¡aunque te caigan mal! ⚔️🏅 El que no haga placas suma falta. 3 faltas y son expulsadosssss 👹👹👹👹"
-    }
+    },
+    "minHonorKeep": 1000,
+    "honorClearThreshold": 3000
   },
   "members": [
     {
@@ -85,11 +87,11 @@
       "nick": "Kain (letras chinas)",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 280,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:30:10.117Z"
+      "updatedAt": "2026-11-23T13:47:48.758Z"
     },
     {
       "id": "m-1795415390695",
@@ -114,10 +116,10 @@
       "ffId": "No tiene",
       "password": "123",
       "honor": 1986,
-      "placas": 3,
+      "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:44:15.211Z"
+      "updatedAt": "2026-11-23T13:53:52.228Z"
     },
     {
       "id": "m-1795415290257",
@@ -198,10 +200,10 @@
       "ffId": "No tiene",
       "password": "123",
       "honor": 1035,
-      "placas": 73,
+      "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:39:39.918Z"
+      "updatedAt": "2026-11-23T13:52:46.251Z"
     },
     {
       "id": "m-1795414957485",
@@ -225,11 +227,11 @@
       "nick": "Snow",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 833,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:21:56.724Z"
+      "updatedAt": "2026-11-23T13:47:45.848Z"
     },
     {
       "id": "m-1795414901212",
@@ -239,11 +241,11 @@
       "nick": "Linguini",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 710,
-      "placas": 80,
+      "honor": 1210,
+      "placas": 55,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:21:41.212Z"
+      "updatedAt": "2026-11-23T13:51:14.229Z"
     },
     {
       "id": "m-1795414859471",
@@ -253,11 +255,11 @@
       "nick": "Cuervo",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 300,
+      "honor": 1050,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:20:59.471Z"
+      "updatedAt": "2026-11-23T13:49:56.617Z"
     },
     {
       "id": "m-1795414848053",
@@ -267,11 +269,11 @@
       "nick": "Binxfast",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 190,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:20:48.053Z"
+      "updatedAt": "2026-11-23T13:46:41.257Z"
     },
     {
       "id": "m-1795414825594",
@@ -281,11 +283,11 @@
       "nick": "Alea",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 180,
+      "honor": 500,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:20:25.594Z"
+      "updatedAt": "2026-11-23T13:50:08.769Z"
     },
     {
       "id": "m-1795414813352",
@@ -295,11 +297,11 @@
       "nick": "Plaga",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 170,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:20:13.352Z"
+      "updatedAt": "2026-11-23T13:48:05.667Z"
     },
     {
       "id": "m-1795414782168",
@@ -309,11 +311,11 @@
       "nick": "Robert",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 120,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:19:42.168Z"
+      "updatedAt": "2026-11-23T13:48:10.813Z"
     },
     {
       "id": "m-1795414761707",
@@ -323,11 +325,11 @@
       "nick": "Tito fire",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 120,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:19:21.707Z"
+      "updatedAt": "2026-11-23T13:48:39.997Z"
     },
     {
       "id": "m-1795414750695",
@@ -337,11 +339,11 @@
       "nick": "Stylex",
       "ffId": "No tiene",
       "password": "123",
-      "honor": 90,
+      "honor": 1000,
       "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:19:10.695Z"
+      "updatedAt": "2026-11-23T13:48:13.494Z"
     },
     {
       "id": "m-1795414701300",
@@ -479,11 +481,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#ec4899",
       "readyForWar": true,
-      "placas": 0,
+      "placas": 80,
       "honor": 1254,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:24:31.797Z"
+      "updatedAt": "2026-11-23T13:52:50.669Z"
     },
     {
       "id": "m-1794870461078",
@@ -495,11 +497,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#ff4500",
       "readyForWar": true,
-      "placas": 50,
+      "placas": 80,
       "honor": 1485,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:27:10.634Z"
+      "updatedAt": "2026-11-23T13:53:45.608Z"
     },
     {
       "id": "m-1794870448654",
@@ -509,11 +511,11 @@
       "nick": "Abaddom",
       "ffId": "2070610502",
       "password": "123",
-      "honor": 0,
-      "placas": 0,
+      "honor": 1000,
+      "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-18T14:12:32.718Z"
+      "updatedAt": "2026-11-23T13:52:53.976Z"
     },
     {
       "id": "m-1794870390552",
@@ -524,10 +526,10 @@
       "ffId": "14500801",
       "password": "123",
       "honor": 2893,
-      "placas": 59,
+      "placas": 80,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:41:03.454Z"
+      "updatedAt": "2026-11-23T13:52:56.331Z"
     },
     {
       "id": "m-1794864960431",
@@ -539,11 +541,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
       "readyForWar": true,
-      "placas": 0,
-      "honor": 544,
+      "placas": 80,
+      "honor": 1000,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:21:23.697Z"
+      "updatedAt": "2026-11-23T13:53:43.528Z"
     },
     {
       "id": "m-1794788919335",
@@ -555,11 +557,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#22c55e",
       "readyForWar": true,
-      "placas": 41,
-      "honor": 876,
+      "placas": 80,
+      "honor": 1000,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:42:03.006Z"
+      "updatedAt": "2026-11-23T13:53:40.683Z"
     },
     {
       "id": "m-1794772366794",
@@ -571,11 +573,11 @@
       "gameRole": "🛡️ Soporte",
       "avatarColor": "#3b82f6",
       "readyForWar": true,
-      "placas": 18,
+      "placas": 80,
       "honor": 1121,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:43:46.261Z"
+      "updatedAt": "2026-11-23T13:53:02.090Z"
     },
     {
       "id": "m-1794767336478",
@@ -635,11 +637,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#ec4899",
       "readyForWar": false,
-      "placas": 78,
+      "placas": 80,
       "honor": 3536,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:39:01.063Z"
+      "updatedAt": "2026-11-23T13:53:37.552Z"
     },
     {
       "id": "m-1794623906672",
@@ -651,11 +653,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#eab308",
       "readyForWar": false,
-      "placas": 28,
+      "placas": 80,
       "honor": 1267,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:43:32.441Z"
+      "updatedAt": "2026-11-23T13:53:34.238Z"
     },
     {
       "id": "m-1794623607366",
@@ -667,11 +669,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#22c55e",
       "readyForWar": true,
-      "placas": 79,
+      "placas": 80,
       "honor": 3532,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:38:37.768Z"
+      "updatedAt": "2026-11-23T13:53:24.709Z"
     },
     {
       "id": "m-1794621849497",
@@ -683,11 +685,11 @@
       "gameRole": "🔥 Rusher",
       "avatarColor": "#3b82f6",
       "readyForWar": true,
-      "placas": 74,
+      "placas": 80,
       "honor": 1307,
       "faltasBase": 0,
       "semanasMas3kPrevias": 0,
-      "updatedAt": "2026-11-23T06:39:25.176Z"
+      "updatedAt": "2026-11-23T13:53:18.814Z"
     },
     {
       "id": "m-1794619614771",
