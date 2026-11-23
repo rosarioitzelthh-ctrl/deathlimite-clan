@@ -9,7 +9,7 @@
   <title>⚔️ 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄 | Clan</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
-  <link rel="stylesheet" href="./css/styles.css?v=12" />
+  <link rel="stylesheet" href="./css/styles.css?v=13" />
 </head>
 <body>
 
@@ -158,13 +158,19 @@
       <div id="adminTopBar" class="hidden" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; background:rgba(255,85,0,0.1); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,85,0,0.35);">
         <span style="font-size:0.8rem; font-weight:900; color:#ff8800;">👑 Panel Rápido Admin</span>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-fire btn-sm" onclick="app.openOcrHonorModal()">
+            📸 Capturas Honor
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="app.openLimitsSettings()">
+            ⚙️ Límites
+          </button>
           <button type="button" class="btn btn-purple btn-sm" onclick="app.sendLiveWarNotification('1pm')">
             🔔 Aviso 1 PM
           </button>
           <button type="button" class="btn btn-danger btn-sm" onclick="app.sendLiveWarNotification('6pm')">
             🚨 Aviso 6 PM
           </button>
-          <button type="button" class="btn btn-fire btn-sm" onclick="app.openMemberModal()">
+          <button type="button" class="btn btn-success btn-sm" onclick="app.openMemberModal()">
             ➕ Agregar
           </button>
         </div>
@@ -401,6 +407,17 @@
     </div>
   </div>
 
-  <script src="./js/app.js?v=12"></script>
+  <!-- MODAL: ACTUALIZAR HONOR POR CAPTURAS (OCR + VISTA) -->
+  <div id="ocrHonorModal" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width:560px; max-height:90vh; overflow-y:auto;">
+      <div class="modal-header">
+        <h3 style="font-size:1.05rem; font-weight:900;">📸 Actualizar Honor con Capturas</h3>
+        <button type="button" class="close-btn" onclick="app.closeOcrHonorModal()">✕</button>
+      </div>
+      <div id="ocrHonorModalBody"></div>
+    </div>
+  </div>
+
+  <script src="./js/app.js?v=13"></script>
 </body>
 </html>
