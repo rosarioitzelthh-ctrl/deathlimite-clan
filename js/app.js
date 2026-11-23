@@ -379,7 +379,7 @@ class FFClanApp {
   }
 
   isUserEditingOrModalOpen() {
-    const modals = ['memberModal', 'newPostModal', 'storyModal', 'syncModal'];
+    const modals = ['memberModal', 'newPostModal', 'storyModal', 'syncModal', 'ocrHonorModal'];
     for (const id of modals) {
       const el = document.getElementById(id);
       if (el && !el.classList.contains('hidden')) return true;
@@ -822,8 +822,35 @@ class FFClanApp {
   // ============================================================================
   // REGLAS AUTOMÁTICAS: POR PLACAS DE GUERRA DE CLANES, HONOR Y FALTAS
   // ============================================================================
+  getMinPlacasGuerra() {
+    return Math.max(1, Number(this.state.clanInfo?.minPlacasGuerra) || 80);
+  }
+
+  getMinHonorKeep() {
+    const raw = this.state.clanInfo?.minHonorKeep ?? this.state.clanInfo?.rules?.minHonorKeep;
+    const val = Number(raw);
+    return Number.isFinite(val) && val >= 0 ? val : 1500;
+  }
+
+  getHonorClearThreshold() {
+    const raw = this.state.clanInfo?.honorClearThreshold ?? this.state.clanInfo?.rules?.honorClearThreshold;
+    const val = Number(raw);
+    return Number.isFinite(val) && val >= 1 ? val : 3000;
+  }
+
+  openLimitsSettings() {
+    if (!this.isAdmin()) return;
+    this.switchView('profile');
+    setTimeout(() => {
+      const el = document.getElementById('adminSettingsCard');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+
   evaluateMember(m) {
-    const minPlacasGuerra = Number(this.state.clanInfo?.minPlacasGuerra) || 80;
+    const minPlacasGuerra = this.getMinPlacasGuerra();
+    const minHonorKeep = this.getMinHonorKeep();
+    const honorClearThreshold = this.getHonorClearThreshold();
     const honor = Number(m.honor) || 0;
     const placas = Number(m.placas) || 0;
     const faltasBase = Math.max(0, Number(m.faltasBase) || 0);
@@ -834,21 +861,21 @@ class FFClanApp {
     const faltaPorGuerraActual = cumplioGuerra ? 0 : 1;
     const faltasBrutas = faltasBase + faltaPorGuerraActual;
 
-    // 2. Para quitar las faltas deben hacer mínimo 2 semanas de más de 3,000 de honor
-    const semanaActualMas3k = honor > 3000 ? 1 : 0;
+    // 2. Para quitar las faltas deben hacer mínimo 2 semanas de más del límite de honor para limpiar
+    const semanaActualMas3k = honor > honorClearThreshold ? 1 : 0;
     const semanasTotalesMas3k = semanasPrevias3k + semanaActualMas3k;
     const limpiaFaltasPorHonor = semanasTotalesMas3k >= 2 && faltasBrutas > 0;
     const faltasEfectivas = limpiaFaltasPorHonor ? 0 : faltasBrutas;
 
-    // 3. Expulsiones: < 1,500 honor O 3 faltas
-    const expulsadoPorHonorBajo = honor < 1500;
+    // 3. Expulsiones: < minHonorKeep honor O 3 faltas
+    const expulsadoPorHonorBajo = honor < minHonorKeep;
     const expulsadoPorTresFaltas = faltasEfectivas >= 3;
     const seVaExpulsado = expulsadoPorHonorBajo || expulsadoPorTresFaltas;
     const vaBien = !seVaExpulsado && faltasEfectivas === 0;
 
     const razonesExpulsion = [];
     if (expulsadoPorHonorBajo) {
-      razonesExpulsion.push(`Honor menor a 1,500 (${honor.toLocaleString()})`);
+      razonesExpulsion.push(`Honor menor a ${minHonorKeep.toLocaleString()} (${honor.toLocaleString()})`);
     }
     if (expulsadoPorTresFaltas) {
       razonesExpulsion.push(`Acumuló ${faltasEfectivas}/3 Faltas (${placas} placas de Guerra)`);
@@ -866,6 +893,8 @@ class FFClanApp {
 
     return {
       minPlacasGuerra,
+      minHonorKeep,
+      honorClearThreshold,
       honor,
       placas,
       faltasBase,
@@ -1189,7 +1218,7 @@ class FFClanApp {
           const statusDesc = ev.seVaExpulsado
             ? ev.razonesExpulsion.join(' • ')
             : ev.faltasEfectivas > 0
-              ? `Para quitarte las faltas haz 2 semanas de >3,000 de honor (llevas ${ev.semanasTotalesMas3k}/2).`
+              ? `Para quitarte las faltas haz 2 semanas de >${ev.honorClearThreshold.toLocaleString()} de honor (llevas ${ev.semanasTotalesMas3k}/2).`
               : 'Recuerda jugar Guerra con los del clan (aunque te caigan mal 😂) para sacar más placas.';
 
           personalBox.innerHTML = `
@@ -1211,10 +1240,10 @@ class FFClanApp {
               <div class="three-pillars-grid">
                 <div class="pillar-box">
                   <div class="pillar-label">🔥 Honor</div>
-                  <div class="pillar-value" style="color:${ev.honor < 1500 ? '#ef4444' : '#fbbf24'};">
+                  <div class="pillar-value" style="color:${ev.honor < ev.minHonorKeep ? '#ef4444' : '#fbbf24'};">
                     ${ev.honor.toLocaleString()}
                   </div>
-                  <div class="pillar-sub">Mín: 1,500</div>
+                  <div class="pillar-sub">Mín: ${ev.minHonorKeep.toLocaleString()}</div>
                 </div>
 
                 <div class="pillar-box">
@@ -1230,7 +1259,7 @@ class FFClanApp {
                   <div class="pillar-value" style="color:${ev.faltasEfectivas >= 3 ? '#ef4444' : ev.faltasEfectivas > 0 ? '#fbbf24' : '#4ade80'};">
                     ${ev.faltasEfectivas}/3
                   </div>
-                  <div class="pillar-sub">Sem &gt;3k: ${ev.semanasTotalesMas3k}/2</div>
+                  <div class="pillar-sub">Sem &gt;${(ev.honorClearThreshold / 1000).toFixed(1).replace('.0', '')}k: ${ev.semanasTotalesMas3k}/2</div>
                 </div>
               </div>
 
@@ -1322,9 +1351,9 @@ class FFClanApp {
         if (ev.seVaExpulsado) {
           reasonHtml = `<div class="verdict-line bad">💀 <strong>Se va expulsado:</strong> ${this.escapeHtml(ev.razonesExpulsion.join(' • '))}</div>`;
         } else if (ev.limpiaFaltasPorHonor) {
-          reasonHtml = `<div class="verdict-line">🧹 <strong>Faltas borradas:</strong> Cumplió ${ev.semanasTotalesMas3k} semanas con &gt;3,000 de honor.</div>`;
+          reasonHtml = `<div class="verdict-line">🧹 <strong>Faltas borradas:</strong> Cumplió ${ev.semanasTotalesMas3k} semanas con &gt;${ev.honorClearThreshold.toLocaleString()} de honor.</div>`;
         } else if (ev.faltasEfectivas > 0) {
-          reasonHtml = `<div class="verdict-line warn">⚠️ ${!ev.cumplioGuerra ? `Hizo pocas placas en Guerra (${ev.placas} < ${ev.minPlacasGuerra} = +1 falta).` : 'Tiene faltas acumuladas.'} Semanas &gt;3,000 honor: ${ev.semanasTotalesMas3k}/2</div>`;
+          reasonHtml = `<div class="verdict-line warn">⚠️ ${!ev.cumplioGuerra ? `Hizo pocas placas en Guerra (${ev.placas} &lt; ${ev.minPlacasGuerra} = +1 falta).` : 'Tiene faltas acumuladas.'} Semanas &gt;${ev.honorClearThreshold.toLocaleString()} honor: ${ev.semanasTotalesMas3k}/2</div>`;
         }
 
         return `
@@ -1355,10 +1384,10 @@ class FFClanApp {
               <!-- HONOR -->
               <div class="pillar-box">
                 <div class="pillar-label">🔥 Honor</div>
-                <div class="pillar-value" style="color:${ev.honor < 1500 ? '#ef4444' : '#fbbf24'};">
+                <div class="pillar-value" style="color:${ev.honor < ev.minHonorKeep ? '#ef4444' : '#fbbf24'};">
                   ${ev.honor.toLocaleString()}
                 </div>
-                <div class="pillar-sub">${ev.honor > 3000 ? '🌟 +3,000 Élite' : 'Mín: 1,500'}</div>
+                <div class="pillar-sub">${ev.honor > ev.honorClearThreshold ? `🌟 +${ev.honorClearThreshold.toLocaleString()} Élite` : `Mín: ${ev.minHonorKeep.toLocaleString()}`}</div>
                 ${isAdmin ? `
                   <div class="step-row">
                     <button type="button" class="step-btn" onclick="app.quickAdjust('${m.id}', 'honor', -250)">-</button>
@@ -1388,7 +1417,7 @@ class FFClanApp {
                 <div class="pillar-value" style="color:${ev.faltasEfectivas >= 3 ? '#ef4444' : ev.faltasEfectivas > 0 ? '#fbbf24' : '#4ade80'};">
                   ${ev.faltasEfectivas}/3
                 </div>
-                <div class="pillar-sub">Sem &gt;3k: ${ev.semanasTotalesMas3k}/2</div>
+                <div class="pillar-sub">Sem &gt;${(ev.honorClearThreshold / 1000).toFixed(1).replace('.0', '')}k: ${ev.semanasTotalesMas3k}/2</div>
                 ${isAdmin ? `
                   <div class="step-row">
                     <button type="button" class="step-btn" onclick="app.quickAdjust('${m.id}', 'faltasBase', -1)">-</button>
@@ -1433,12 +1462,13 @@ class FFClanApp {
     const m = this.state.members.find(x => x.id === memberId);
     if (!m) return;
     m.faltasBase = 0;
-    const minPlacas = Number(this.state.clanInfo?.minPlacasGuerra) || 80;
+    const minPlacas = this.getMinPlacasGuerra();
+    const minHonor = this.getMinHonorKeep();
     if ((Number(m.placas) || 0) < minPlacas) {
       m.placas = minPlacas;
     }
-    if ((Number(m.honor) || 0) < 1500) {
-      m.honor = 1500;
+    if ((Number(m.honor) || 0) < minHonor) {
+      m.honor = minHonor;
     }
     m.updatedAt = new Date().toISOString();
     this.persistAndSync(`✅ Estado de ${m.nick} actualizado y puesto al día (0 faltas)`);
@@ -1485,8 +1515,8 @@ class FFClanApp {
       gameRole: '🔥 Rusher',
       avatarColor: '#3b82f6',
       readyForWar: false,
-      placas: Number(this.state.clanInfo?.minPlacasGuerra) || 80,
-      honor: 1500,
+      placas: this.getMinPlacasGuerra(),
+      honor: this.getMinHonorKeep(),
       faltasBase: 0,
       semanasMas3kPrevias: 0,
       updatedAt: new Date().toISOString()
@@ -1553,7 +1583,7 @@ class FFClanApp {
         ? expelled.map(x => `• *${x.m.nick}* ➔ ${x.ev.razonesExpulsion.join(' + ')}`)
         : ['• Ningún expulsado.']),
       `━━━━━━━━━━━━━━━━━━━━`,
-      `📌 *Recuerda:* Si quieres hacer más placas en Guerra de Clanes, debes jugar con los del clan ¡aunque te caigan mal! 😂🔥 (2 semanas >3,000 Honor quita faltas | <1,500 Honor = expulsión).`
+      `📌 *Recuerda:* Si quieres hacer más placas en Guerra de Clanes, debes jugar con los del clan ¡aunque te caigan mal! 😂🔥 (2 semanas >${this.getHonorClearThreshold().toLocaleString()} Honor quita faltas | <${this.getMinHonorKeep().toLocaleString()} Honor = expulsión).`
     ];
 
     return lines.join('\n');
@@ -1723,7 +1753,7 @@ class FFClanApp {
               <span class="status-badge warning">⚠️ ${ev.faltasEfectivas}/3 Faltas</span>
             </div>
             <div class="verdict-line warn">
-              🏅 Placas Guerra: ${ev.placas} • 🔥 Honor: ${ev.honor.toLocaleString()} • Semanas &gt;3,000 honor: ${ev.semanasTotalesMas3k}/2
+              🏅 Placas Guerra: ${ev.placas} • 🔥 Honor: ${ev.honor.toLocaleString()} • Semanas &gt;${ev.honorClearThreshold.toLocaleString()} honor: ${ev.semanasTotalesMas3k}/2
             </div>
             ${isAdmin ? `
               <div class="admin-decision-bar">
@@ -1783,7 +1813,7 @@ class FFClanApp {
     if (myMember) {
       const ev = this.evaluateMember(myMember);
       const badges = [];
-      if (ev.honor > 3000) badges.push('🔥 Élite +3,000 Honor');
+      if (ev.honor > ev.honorClearThreshold) badges.push(`🔥 Élite +${ev.honorClearThreshold.toLocaleString()} Honor`);
       if (ev.placas >= 200) badges.push('⚔️ Destructor de Guerra (+200 Placas)');
       if (ev.faltasEfectivas === 0) badges.push('🛡️ Invicto Cero Faltas');
       badges.push('💎 Guerrero 𝐃𝐄𝐀𝐓𝐇𝐋𝐈𝐌𝐈𝐓𝐄');
@@ -1902,8 +1932,13 @@ class FFClanApp {
       </div>
 
       ${isAdmin ? `
-        <div class="member-card">
-          <h3 style="font-size:1rem; font-weight:900; margin-bottom:12px;">👑 Ajustes de Administrador</h3>
+        <div class="member-card" id="adminSettingsCard">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+            <h3 style="font-size:1rem; font-weight:900;">👑 Ajustes de Administrador</h3>
+            <button type="button" class="btn btn-fire btn-sm" onclick="app.openOcrHonorModal()">
+              📸 Actualizar Honor por Capturas
+            </button>
+          </div>
           <form onsubmit="app.saveAdminSettings(event)">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
               <div class="form-group">
@@ -1917,8 +1952,19 @@ class FFClanApp {
             </div>
 
             <div class="form-group">
-              <label class="form-label">🏅 Mínimo de Placas en Guerra (Menos de esto = +1 Falta)</label>
-              <input type="number" min="1" id="cfgMinPlacas" class="form-input" value="${Number(info.minPlacasGuerra) || 80}" required />
+              <label class="form-label">🏅 Límite Mínimo de Placas en Guerra (Menos de esto = +1 Falta)</label>
+              <input type="number" min="1" id="cfgMinPlacas" class="form-input" value="${this.getMinPlacasGuerra()}" required />
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div class="form-group">
+                <label class="form-label">🔥 Límite Mín. Honor (Expulsión)</label>
+                <input type="number" min="0" id="cfgMinHonorKeep" class="form-input" value="${this.getMinHonorKeep()}" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">🧹 Honor p/ Quitar Faltas (2 sem.)</label>
+                <input type="number" min="1" id="cfgHonorClearThreshold" class="form-input" value="${this.getHonorClearThreshold()}" required />
+              </div>
             </div>
 
             <div class="form-group">
@@ -2338,12 +2384,394 @@ class FFClanApp {
       adminUser: document.getElementById('cfgAdminUser').value.trim(),
       adminPass: document.getElementById('cfgAdminPass').value.trim()
     };
-    this.state.clanInfo.minPlacasGuerra = Math.max(1, Number(document.getElementById('cfgMinPlacas').value) || 80);
+    const minPlacas = Math.max(1, Number(document.getElementById('cfgMinPlacas').value) || 80);
+    const minHonor = Math.max(0, Number(document.getElementById('cfgMinHonorKeep').value) || 0);
+    const clearHonor = Math.max(1, Number(document.getElementById('cfgHonorClearThreshold').value) || 3000);
+
+    this.state.clanInfo.minPlacasGuerra = minPlacas;
+    this.state.clanInfo.minHonorKeep = minHonor;
+    this.state.clanInfo.honorClearThreshold = clearHonor;
+    if (this.state.clanInfo.rules) {
+      this.state.clanInfo.rules.minHonorKeep = minHonor;
+      this.state.clanInfo.rules.honorClearThreshold = clearHonor;
+    }
+
     this.state.clanInfo.warNotifConfig = {
       msg1pm: document.getElementById('cfgMsg1pm').value.trim(),
       msg6pm: document.getElementById('cfgMsg6pm').value.trim()
     };
-    this.persistAndSync('✅ Ajustes de Admin y Notificaciones guardados');
+    this.persistAndSync('✅ Límites de Honor, Placas y Ajustes guardados');
+  }
+
+  // ============================================================================
+  // ACTUALIZAR HONOR VIENDO CAPTURAS DE PANTALLA (OCR + REVISIÓN VISUAL)
+  // ============================================================================
+  openOcrHonorModal() {
+    if (!this.isAdmin()) return;
+    this.ocrState = {
+      images: [],
+      selectedImageIdx: 0,
+      scanning: false,
+      progressText: '',
+      detectedMap: {},
+      manualEdits: {},
+      rawLines: []
+    };
+    const modal = document.getElementById('ocrHonorModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    this.renderOcrHonorModal();
+  }
+
+  closeOcrHonorModal() {
+    document.getElementById('ocrHonorModal')?.classList.add('hidden');
+  }
+
+  loadTesseractLibrary() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (this._tesseractPromise) return this._tesseractPromise;
+    this._tesseractPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = () => resolve(window.Tesseract);
+      s.onerror = () => reject(new Error('No se pudo cargar el lector OCR'));
+      document.head.appendChild(s);
+    });
+    return this._tesseractPromise;
+  }
+
+  normalizeNickForMatch(str) {
+    return String(str || '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/[\u200B-\u200D\uFEFF\u3164]/g, '')
+      .replace(/[^a-z0-9áéíóúñü]/g, '');
+  }
+
+  levenshtein(a, b) {
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[a.length][b.length];
+  }
+
+  findBestMemberMatchFromLine(lineText) {
+    const cleanLine = this.normalizeNickForMatch(lineText);
+    if (cleanLine.length < 2) return null;
+
+    const rawTokens = String(lineText || '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .split(/[\s|•·,;:()[\]{}]+/)
+      .map(t => t.replace(/[^a-z0-9áéíóúñü]/g, ''))
+      .filter(t => t.length >= 3);
+
+    let bestMember = null;
+    let bestScore = 0;
+
+    for (const m of (this.state.members || [])) {
+      const candidates = [m.nick, m.previousNick].filter(Boolean);
+      for (const rawName of candidates) {
+        const normName = this.normalizeNickForMatch(rawName);
+        if (normName.length < 2) continue;
+
+        let score = 0;
+        if (cleanLine.includes(normName)) {
+          score = 1.0;
+        } else {
+          const nameTokens = String(rawName)
+            .normalize('NFKC')
+            .toLowerCase()
+            .split(/[\s•·._-]+/)
+            .map(t => t.replace(/[^a-z0-9áéíóúñü]/g, ''))
+            .filter(t => t.length >= 3 && t !== 'dl');
+
+          for (const nt of nameTokens) {
+            if (cleanLine.includes(nt)) {
+              score = Math.max(score, 0.88);
+            }
+            for (const rt of rawTokens) {
+              const maxLen = Math.max(nt.length, rt.length);
+              if (maxLen >= 4) {
+                const dist = this.levenshtein(nt, rt);
+                const sim = 1 - dist / maxLen;
+                if (sim >= 0.72) score = Math.max(score, sim * 0.9);
+              }
+            }
+          }
+
+          if (score === 0 && normName.length >= 4) {
+            for (const rt of rawTokens) {
+              const maxLen = Math.max(normName.length, rt.length);
+              const dist = this.levenshtein(normName, rt);
+              const sim = 1 - dist / maxLen;
+              if (sim >= 0.7) score = Math.max(score, sim * 0.85);
+            }
+          }
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMember = m;
+        }
+      }
+    }
+
+    return bestScore >= 0.7 ? bestMember : null;
+  }
+
+  extractHonorFromText(text) {
+    const matches = String(text || '').match(/\d{1,3}(?:[.,\s]\d{3})+|\d{3,6}/g) || [];
+    const nums = matches
+      .map(s => Number(s.replace(/[.,\s]/g, '')))
+      .filter(n => Number.isFinite(n) && n >= 100 && n <= 200000);
+    if (nums.length === 0) return null;
+    // En Free Fire el honor semanal/total suele ser el número grande de la fila (>= 100)
+    return Math.max(...nums);
+  }
+
+  preprocessImageForOcr(dataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = img.width < 1200 ? 1.8 : 1.25;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.filter = 'grayscale(100%) contrast(155%) brightness(115%)';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  async handleOcrScreenshotsSelected(event) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const loaded = await Promise.all(files.map(file => new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve({ name: file.name, dataUrl: e.target.result });
+      reader.readAsDataURL(file);
+    })));
+
+    this.ocrState.images = [...this.ocrState.images, ...loaded];
+    this.ocrState.selectedImageIdx = 0;
+    this.renderOcrHonorModal();
+    await this.runOcrOnScreenshots(loaded);
+  }
+
+  async runOcrOnScreenshots(imagesToScan) {
+    if (!imagesToScan || !imagesToScan.length) return;
+    this.ocrState.scanning = true;
+    this.ocrState.progressText = '⏳ Iniciando lector de capturas...';
+    this.renderOcrHonorModal();
+
+    try {
+      const Tesseract = await this.loadTesseractLibrary();
+      for (let idx = 0; idx < imagesToScan.length; idx++) {
+        const item = imagesToScan[idx];
+        this.ocrState.progressText = `🔍 Leyendo captura ${idx + 1} de ${imagesToScan.length}...`;
+        this.renderOcrHonorModal();
+
+        const processedUrl = await this.preprocessImageForOcr(item.dataUrl);
+        const result = await Tesseract.recognize(processedUrl, 'spa+eng', {
+          logger: (m) => {
+            if (m.status === 'recognizing text' && typeof m.progress === 'number') {
+              const pct = Math.round(m.progress * 100);
+              const progEl = document.getElementById('ocrProgressLabel');
+              if (progEl) progEl.textContent = `🔍 Leyendo captura ${idx + 1}/${imagesToScan.length} (${pct}%)...`;
+            }
+          }
+        });
+
+        const lines = String(result?.data?.text || '')
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean);
+
+        this.ocrState.rawLines.push(...lines);
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const member = this.findBestMemberMatchFromLine(line);
+          if (member) {
+            let detectedHonor = this.extractHonorFromText(line);
+            if (detectedHonor === null && lines[i + 1]) {
+              detectedHonor = this.extractHonorFromText(lines[i + 1]);
+            }
+            if (detectedHonor !== null) {
+              this.ocrState.detectedMap[member.id] = {
+                honor: detectedHonor,
+                checked: true,
+                sourceLine: line
+              };
+            }
+          }
+        }
+      }
+      this.ocrState.progressText = `✅ Escaneo listo (${Object.keys(this.ocrState.detectedMap).length} detectados automáticamente). Verifica viendo la captura abajo:`;
+    } catch (err) {
+      this.ocrState.progressText = '⚠️ No se pudo leer automáticamente; puedes ver la captura aquí abajo y escribir el honor directo.';
+    } finally {
+      this.ocrState.scanning = false;
+      this.renderOcrHonorModal();
+    }
+  }
+
+  selectOcrPreviewImage(idx) {
+    this.ocrState.selectedImageIdx = idx;
+    this.renderOcrHonorModal();
+  }
+
+  updateOcrMemberHonorInput(memberId, val) {
+    const num = Math.max(0, Number(val) || 0);
+    if (this.ocrState.detectedMap[memberId]) {
+      this.ocrState.detectedMap[memberId].honor = num;
+      this.ocrState.detectedMap[memberId].checked = true;
+    } else {
+      this.ocrState.manualEdits[memberId] = num;
+    }
+  }
+
+  toggleOcrMemberChecked(memberId, checked) {
+    if (this.ocrState.detectedMap[memberId]) {
+      this.ocrState.detectedMap[memberId].checked = checked;
+    }
+  }
+
+  applyOcrHonorUpdates() {
+    if (!this.isAdmin()) return;
+    let updatedCount = 0;
+    const now = new Date().toISOString();
+
+    for (const m of (this.state.members || [])) {
+      const detected = this.ocrState.detectedMap[m.id];
+      const manual = this.ocrState.manualEdits[m.id];
+      if (detected && detected.checked) {
+        m.honor = Math.max(0, Number(detected.honor) || 0);
+        m.updatedAt = now;
+        updatedCount++;
+      } else if (manual !== undefined && manual !== null && manual !== '') {
+        m.honor = Math.max(0, Number(manual) || 0);
+        m.updatedAt = now;
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount === 0) {
+      this.showToast('⚠️ No hay cambios seleccionados para guardar');
+      return;
+    }
+
+    this.closeOcrHonorModal();
+    this.persistAndSync(`✅ ¡Honor actualizado en ${updatedCount} integrante(s) desde tus capturas!`);
+  }
+
+  renderOcrHonorModal() {
+    const body = document.getElementById('ocrHonorModalBody');
+    if (!body) return;
+
+    const st = this.ocrState || { images: [], selectedImageIdx: 0, detectedMap: {}, manualEdits: {}, scanning: false, progressText: '' };
+    const members = this.state.members || [];
+    const detectedIds = Object.keys(st.detectedMap);
+    const detectedMembers = members.filter(m => st.detectedMap[m.id]);
+    const otherMembers = members.filter(m => !st.detectedMap[m.id]);
+    const activeImg = st.images[st.selectedImageIdx];
+
+    body.innerHTML = `
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">
+        Sube 1 o varias capturas de la lista del clan. La app detecta el nombre y su honor automáticamente, y deja la imagen visible para que revises o completes cualquier nombre.
+      </p>
+
+      <div class="form-group">
+        <label class="btn btn-fire btn-block" style="cursor:pointer;">
+          📤 Seleccionar Capturas de Pantalla
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="app.handleOcrScreenshotsSelected(event)" />
+        </label>
+      </div>
+
+      ${st.progressText ? `
+        <div id="ocrProgressLabel" style="font-size:0.8rem; font-weight:800; color:#fbbf24; background:rgba(251,191,36,0.12); padding:8px 10px; border-radius:10px; margin-bottom:10px;">
+          ${this.escapeHtml(st.progressText)}
+        </div>
+      ` : ''}
+
+      ${st.images.length > 0 ? `
+        <div style="margin-bottom:12px;">
+          ${st.images.length > 1 ? `
+            <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:8px;">
+              ${st.images.map((im, i) => `
+                <button type="button" class="filter-btn ${i === st.selectedImageIdx ? 'active' : ''}" onclick="app.selectOcrPreviewImage(${i})">
+                  Captura ${i + 1}
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${activeImg ? `
+            <div style="border:1px solid rgba(255,255,255,0.15); border-radius:12px; overflow:hidden; background:#000; max-height:260px; overflow-y:auto;">
+              <img src="${activeImg.dataUrl}" alt="Captura" style="width:100%; display:block;" />
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      ${detectedMembers.length > 0 ? `
+        <div style="font-size:0.82rem; font-weight:900; color:#4ade80; margin-bottom:6px;">
+          ✅ Detectados automáticamente (${detectedMembers.length}):
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:14px;">
+          ${detectedMembers.map(m => {
+            const det = st.detectedMap[m.id];
+            return `
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.35); padding:8px 10px; border-radius:10px;">
+                <label style="display:flex; align-items:center; gap:8px; min-width:0; flex:1; cursor:pointer;">
+                  <input type="checkbox" ${det.checked ? 'checked' : ''} onchange="app.toggleOcrMemberChecked('${m.id}', this.checked)" />
+                  <div style="min-width:0;">
+                    <div style="font-weight:800; font-size:0.86rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.escapeHtml(m.nick)}</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">Actual: ${(Number(m.honor) || 0).toLocaleString()}</div>
+                  </div>
+                </label>
+                <input type="number" min="0" class="form-input" style="width:105px; padding:7px 9px; font-weight:900; text-align:right;" value="${det.honor}" oninput="app.updateOcrMemberHonorInput('${m.id}', this.value)" />
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+
+      <div style="font-size:0.82rem; font-weight:900; color:var(--text-muted); margin-bottom:6px;">
+        📋 ${detectedIds.length > 0 ? 'Otros integrantes (por si faltó alguno viendo la captura):' : 'Integrantes del clan (escribe el honor viendo tu captura):'}
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; margin-bottom:14px;">
+        ${otherMembers.map(m => {
+          const val = st.manualEdits[m.id] !== undefined ? st.manualEdits[m.id] : '';
+          return `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-input); padding:7px 10px; border-radius:10px;">
+              <div style="min-width:0; flex:1;">
+                <div style="font-weight:800; font-size:0.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.escapeHtml(m.nick)}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">Actual: ${(Number(m.honor) || 0).toLocaleString()}</div>
+              </div>
+              <input type="number" min="0" placeholder="${Number(m.honor) || 0}" class="form-input" style="width:105px; padding:6px 9px; text-align:right;" value="${val}" oninput="app.updateOcrMemberHonorInput('${m.id}', this.value)" />
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-secondary btn-block" onclick="app.closeOcrHonorModal()">Cancelar</button>
+        <button type="button" class="btn btn-success btn-block" onclick="app.applyOcrHonorUpdates()">💾 Guardar Honor</button>
+      </div>
+    `;
   }
 
   openSyncModal() {
